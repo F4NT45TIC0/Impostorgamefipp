@@ -58,10 +58,12 @@ function generateRoomId() {
 // Retorna uma versão segura do estado da sala para transmissão pública
 // Esconde papéis e palavras secretas dos jogadores
 function getPublicRoomState(room) {
-  return {
+  const state = {
     id: room.id,
     gameState: room.gameState,
     settings: room.settings,
+    prepEndTime: room.prepEndTime,
+    viewingEndTime: room.viewingEndTime,
     discussionEndTime: room.discussionEndTime,
     players: room.players.map(p => ({
       id: p.id,
@@ -73,6 +75,17 @@ function getPublicRoomState(room) {
     // Exibe categorias disponíveis para o cliente renderizar
     availableCategories: ['Aleatório', ...getCategories()]
   };
+
+  // Ao iniciar a discussão, revela a identidade de todos para o painel de debriefing
+  if (room.gameState === 'DISCUSSION') {
+    state.revealedRoles = room.players.map(p => ({
+      nickname: p.nickname,
+      role: p.role,
+      word: p.word
+    }));
+  }
+
+  return state;
 }
 
 io.on('connection', (socket) => {
@@ -241,42 +254,62 @@ io.on('connection', (socket) => {
         return socket.emit('error_message', 'Todos os jogadores precisam estar prontos!');
       }
 
-      // Seleciona as palavras secretas
-      const wordPair = getRandomPair(room.settings.category);
-      room.currentWords = {
-        civilian: wordPair.civilian,
-        impostor: wordPair.impostor,
-        category: wordPair.category
-      };
+      // 1. Transiciona para a fase de PREPARAÇÃO (5 segundos)
+      room.gameState = 'PREPARING';
+      room.prepEndTime = Date.now() + 5000;
+      room.viewingEndTime = null;
 
-      // Sorteia os Impostores
-      const shuffledPlayers = [...activePlayers].sort(() => Math.random() - 0.5);
-      const impostorIds = new Set(
-        shuffledPlayers.slice(0, room.settings.impostorsCount).map(p => p.id)
-      );
-
-      // Distribui papéis e palavras
-      room.players.forEach(p => {
-        if (p.connected) {
-          if (impostorIds.has(p.id)) {
-            p.role = 'impostor';
-            p.word = room.currentWords.impostor;
-          } else {
-            p.role = 'civilian';
-            p.word = room.currentWords.civilian;
-          }
-          // Envia de forma privada para cada jogador
-          io.to(p.id).emit('game_started', {
-            role: p.role,
-            word: p.word,
-            category: room.currentWords.category
-          });
-        }
-      });
-
-      room.gameState = 'PLAYING';
       io.to(room.id).emit('room_state', getPublicRoomState(room));
-      console.log(`Jogo iniciado na sala ${room.id}. Categoria: ${wordPair.category}`);
+      console.log(`Sala ${room.id} em fase de PREPARAÇÃO por 5 segundos.`);
+
+      // 2. Agenda a transição para início real da partida após 5s
+      setTimeout(() => {
+        // Valida se a sala ainda existe e permanece em fase de preparação
+        const currentRoom = rooms.get(room.id);
+        if (!currentRoom || currentRoom.gameState !== 'PREPARING') return;
+
+        const currentActivePlayers = currentRoom.players.filter(p => p.connected);
+
+        // Seleciona as palavras secretas
+        const wordPair = getRandomPair(currentRoom.settings.category);
+        currentRoom.currentWords = {
+          civilian: wordPair.civilian,
+          impostor: wordPair.impostor,
+          category: wordPair.category
+        };
+
+        // Sorteia os Impostores
+        const shuffledPlayers = [...currentActivePlayers].sort(() => Math.random() - 0.5);
+        const impostorIds = new Set(
+          shuffledPlayers.slice(0, currentRoom.settings.impostorsCount).map(p => p.id)
+        );
+
+        // Distribui papéis e palavras
+        currentRoom.players.forEach(p => {
+          if (p.connected) {
+            if (impostorIds.has(p.id)) {
+              p.role = 'impostor';
+              p.word = currentRoom.currentWords.impostor;
+            } else {
+              p.role = 'civilian';
+              p.word = currentRoom.currentWords.civilian;
+            }
+            // Envia de forma privada para cada jogador
+            io.to(p.id).emit('game_started', {
+              role: p.role,
+              word: p.word,
+              category: currentRoom.currentWords.category
+            });
+          }
+        });
+
+        // Transiciona para JOGANDO e estabelece o cronômetro de 15 segundos para visualização
+        currentRoom.gameState = 'PLAYING';
+        currentRoom.viewingEndTime = Date.now() + 15000;
+
+        io.to(currentRoom.id).emit('room_state', getPublicRoomState(currentRoom));
+        console.log(`Jogo iniciado na sala ${currentRoom.id}. Categoria: ${wordPair.category}. 15s para memorização.`);
+      }, 5000);
     }
   });
 
