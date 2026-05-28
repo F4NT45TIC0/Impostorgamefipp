@@ -36,7 +36,7 @@ export default function App() {
 
     // Ouvintes globais de socket
     socket.on('connect', () => {
-      console.log('Conectado ao servidor de sockets');
+      console.log('Conexão estabelecida com o mainframe.');
     });
 
     socket.on('room_created', (code) => {
@@ -180,7 +180,7 @@ export default function App() {
   const handleCreateRoom = (e) => {
     e.preventDefault();
     if (!nickname.trim()) {
-      return setErrorMsg('Por favor, escolha um apelido.');
+      return setErrorMsg('Apelido obrigatorio.');
     }
     socket.emit('create_room', { nickname });
   };
@@ -188,10 +188,10 @@ export default function App() {
   const handleJoinRoom = (e) => {
     e.preventDefault();
     if (!nickname.trim()) {
-      return setErrorMsg('Por favor, escolha um apelido.');
+      return setErrorMsg('Apelido obrigatorio.');
     }
     if (!inputRoomId.trim()) {
-      return setErrorMsg('Por favor, digite o código da sala.');
+      return setErrorMsg('Codigo da sala necessario.');
     }
     socket.emit('join_room', {
       roomId: inputRoomId.toUpperCase().trim(),
@@ -264,27 +264,29 @@ export default function App() {
       {/* Pop-up de erro global */}
       {errorMsg && (
         <div className="error-popup">
-          <span>⚠️ {errorMsg}</span>
+          <span>ALERTA: {errorMsg}</span>
           <button className="error-close-btn" onClick={() => setErrorMsg(null)}>×</button>
         </div>
       )}
 
-      {/* TELA 1: TELA INICIAL (Criar / Entrar) */}
+      {/* TELA 1: TELA INICIAL (Acesso ao Mainframe) */}
       {!roomId && (
         <div className="welcome-screen glass-panel">
           <div className="logo-container">
-            <div className="logo-icon">🕵️‍♂️</div>
-            <h1>IMPOSTOR</h1>
-            <p>Descubra o espião no debate da vida real</p>
+            <div className="logo-icon">IN</div>
+            <h1>IMPOSTOR // CONTROL</h1>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              SISTEMA DE ANÁLISE DE INFILTRAÇÃO E ESPIONAGEM
+            </p>
           </div>
 
           <form onSubmit={handleCreateRoom}>
             <div className="glass-input-group">
-              <label htmlFor="nickname">Seu Apelido</label>
+              <label htmlFor="nickname">IDENTIFICAÇÃO DE AGENTE</label>
               <input
                 id="nickname"
                 type="text"
-                placeholder="Ex: Felipe"
+                placeholder="REGISTRAR APELIDO..."
                 maxLength={15}
                 className="glass-input"
                 value={nickname}
@@ -293,19 +295,19 @@ export default function App() {
               />
             </div>
             <button type="submit" className="btn btn-primary">
-              🆕 Criar Nova Sala
+              CRIAR SALA DE OPERAÇÕES
             </button>
           </form>
 
-          <div className="divider">ou</div>
+          <div className="divider">CONEXÃO SECUNDÁRIA</div>
 
           <form onSubmit={handleJoinRoom}>
             <div className="glass-input-group" style={{ marginBottom: '1rem' }}>
-              <label htmlFor="room-code">Código da Sala</label>
+              <label htmlFor="room-code">DIRECIONAR CÓDIGO DO CANAL</label>
               <input
                 id="room-code"
                 type="text"
-                placeholder="Ex: ABCD"
+                placeholder="CÓDIGO DE 4 LETRAS"
                 maxLength={4}
                 className="glass-input"
                 style={{ textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.2em' }}
@@ -314,62 +316,64 @@ export default function App() {
               />
             </div>
             <button type="submit" className="btn btn-secondary">
-              🔌 Entrar na Partida
+              ACESSAR CANAL ATIVO
             </button>
           </form>
         </div>
       )}
 
-      {/* TELA 2: LOBBY (Sala de Espera) */}
+      {/* TELA 2: LOBBY (Dossiês do Squad de Operação) */}
       {roomId && roomState && roomState.gameState === 'LOBBY' && (
         <div className="lobby-screen glass-panel">
           <div className="room-header">
             <div>
-              <p style={{ margin: 0, fontSize: '0.75rem', textAlign: 'left', color: 'var(--text-sec)', fontFamily: 'var(--font-mono)' }}>SALA ONLINE</p>
-              <h2 style={{ margin: 0, textAlign: 'left' }}>Aguardando...</h2>
+              <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-dimmed)', fontFamily: 'var(--font-mono)' }}>CANAL CRIPTOGRAFADO</p>
+              <h2 style={{ margin: 0, textAlign: 'left', fontWeight: 'bold' }}>SALA DE ESPERA</h2>
             </div>
             <div className="room-code-badge" onClick={copyRoomCode}>
               <span className="room-code-text">{roomId}</span>
-              <span className="room-code-copy-icon">{copiedCode ? '✅ Copiado' : '📋 Copiar'}</span>
+              <span className="room-code-copy-icon" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>
+                {copiedCode ? '[COPIADO]' : '[COPIAR]'}
+              </span>
             </div>
           </div>
 
           {/* Configurações (Apenas para o Host ver e alterar, outros veem travado) */}
           <div className="settings-section">
-            <span className="settings-section-title">⚙️ Ajustes da Partida</span>
+            <span className="settings-section-title">PARÂMETROS DA DIRETRIZ</span>
             <div className="settings-grid">
               <div className="setting-item-inline">
-                <label>Impostores</label>
+                <label>INFILTRADOS</label>
                 <select
                   disabled={!isHost}
                   className="setting-input-small glass-select"
                   value={roomState.settings.impostorsCount}
                   onChange={(e) => handleUpdateSettings({ impostorsCount: parseInt(e.target.value) })}
                 >
-                  <option value={1}>1 Impostor</option>
-                  <option value={2}>2 Impostores</option>
-                  <option value={3}>3 Impostores</option>
+                  <option value={1}>1 IMPOSTOR</option>
+                  <option value={2}>2 IMPOSTORES</option>
+                  <option value={3}>3 IMPOSTORES</option>
                 </select>
               </div>
 
               <div className="setting-item-inline">
-                <label>Timer Discussão</label>
+                <label>TIMER DEBATE</label>
                 <select
                   disabled={!isHost}
                   className="setting-input-small glass-select"
                   value={roomState.settings.timerDuration}
                   onChange={(e) => handleUpdateSettings({ timerDuration: parseInt(e.target.value) })}
                 >
-                  <option value={60}>1 minuto</option>
-                  <option value={120}>2 minutos</option>
-                  <option value={180}>3 minutos</option>
-                  <option value={240}>4 minutos</option>
-                  <option value={300}>5 minutos</option>
+                  <option value={60}>1 MINUTO</option>
+                  <option value={120}>2 MINUTOS</option>
+                  <option value={180}>3 MINUTOS</option>
+                  <option value={240}>4 MINUTOS</option>
+                  <option value={300}>5 MINUTOS</option>
                 </select>
               </div>
 
               <div className="setting-item-inline" style={{ gridColumn: 'span 2' }}>
-                <label>Tema das Palavras</label>
+                <label>DIRETÓRIO DE PALAVRAS // BANCO DE DADOS</label>
                 <select
                   disabled={!isHost}
                   className="setting-input-small glass-select"
@@ -377,7 +381,7 @@ export default function App() {
                   onChange={(e) => handleUpdateSettings({ category: e.target.value })}
                 >
                   {roomState.availableCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat}>{cat.toUpperCase()}</option>
                   ))}
                 </select>
               </div>
@@ -387,32 +391,31 @@ export default function App() {
           {/* Lista de Jogadores */}
           <div className="players-container">
             <div className="players-title-row">
-              <span className="settings-section-title" style={{ margin: 0 }}>👥 Jogadores</span>
-              <span className="players-count">{activePlayers.length}/20</span>
+              <span className="settings-section-title" style={{ margin: 0 }}>INTEGRANTES DO SQUAD</span>
+              <span className="players-count">{activePlayers.length} ATIVOS</span>
             </div>
             <div className="players-list">
               {roomState.players.map((p) => {
                 const isMe = p.id === socket?.id;
-                const initials = p.nickname.slice(0, 2).toUpperCase();
                 return (
                   <div key={p.id} className="player-item">
                     <div className="player-info">
-                      <div className={`player-avatar ${p.isHost ? 'is-host' : ''} ${isMe ? 'is-me' : ''}`}>
-                        {p.isHost ? '👑' : initials}
-                      </div>
+                      <span className={`player-avatar ${p.isHost ? 'is-host' : ''}`}>
+                        {p.isHost ? '[LÍDER]' : '   //'}
+                      </span>
                       <span className={`player-name ${isMe ? 'is-me' : ''}`}>
-                        {p.nickname} {isMe && '(Você)'}
+                        {p.nickname.toUpperCase()} {isMe && '(VOCÊ)'}
                       </span>
                     </div>
                     <div className="player-badges">
                       {!p.connected ? (
-                        <span className="badge badge-disconnected">Offline</span>
+                        <span className="badge badge-disconnected">[OFFLINE]</span>
                       ) : p.isHost ? (
-                        <span className="badge badge-host">Dono</span>
+                        <span className="badge badge-host">[ANFITRIÃO]</span>
                       ) : p.isReady ? (
-                        <span className="badge badge-ready">Pronto</span>
+                        <span className="badge badge-ready">[PRONTO]</span>
                       ) : (
-                        <span className="badge badge-not-ready">Esperando</span>
+                        <span className="badge badge-not-ready">[AGUARDANDO]</span>
                       )}
                     </div>
                   </div>
@@ -428,7 +431,7 @@ export default function App() {
                 onClick={handleToggleReady}
                 className={`btn ${me?.isReady ? 'btn-glass' : 'btn-primary'}`}
               >
-                {me?.isReady ? '❌ Cancelar Pronto' : '👍 Ficar PRONTO'}
+                {me?.isReady ? 'CANCELAR PRONTO' : 'DECLARAR PRONTO // ATIVO'}
               </button>
             ) : (
               <button
@@ -436,75 +439,74 @@ export default function App() {
                 disabled={activePlayers.length < roomState.settings.impostorsCount + 2 || !activePlayers.every(p => p.isHost || p.isReady)}
                 className="btn btn-primary"
               >
-                🎮 Iniciar Partida
+                EXECUTAR DIRETRIZ DE INFILTRAÇÃO
               </button>
             )}
             
             <button onClick={handleLeaveRoom} className="btn btn-glass">
-              🚪 Sair da Sala
+              DESCONECTAR CANAL
             </button>
 
             {isHost && activePlayers.length < roomState.settings.impostorsCount + 2 && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--neon-pink)', margin: 0, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-                * Mínimo de {roomState.settings.impostorsCount + 2} jogadores para iniciar com {roomState.settings.impostorsCount} impostor(es).
+              <p style={{ fontSize: '0.75rem', color: 'var(--impostor-red)', margin: 0, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
+                AVISO: NECESSÁRIO MÍNIMO DE {roomState.settings.impostorsCount + 2} AGENTES PARA CONEXÃO COM {roomState.settings.impostorsCount} INFILTRADOS.
               </p>
             )}
             {isHost && activePlayers.length >= roomState.settings.impostorsCount + 2 && !activePlayers.every(p => p.isHost || p.isReady) && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-sec)', margin: 0, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-                * Aguardando todos os jogadores ficarem "Pronto" para iniciar.
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
+                STATUS: AGUARDANDO SINCRONIZAÇÃO DE PRONTO DE TODOS OS INTEGRANTES.
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* TELA 3: PREPARING (5s de Contagem Regressiva de Segurança) */}
+      {/* TELA 3: PREPARING (5s de Contagem Regressiva de Segurança - Altamente Clínico) */}
       {roomId && roomState && roomState.gameState === 'PREPARING' && (
         <div className="glass-panel welcome-screen" style={{ textAlign: 'center', alignItems: 'center' }}>
-          <span className="category-badge" style={{ fontSize: '0.75rem', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)' }}>🛰️ AGENDANDO INÍCIO</span>
-          <h2 style={{ fontSize: '1.6rem', marginTop: '0.5rem' }}>Prepare-se!</h2>
-          <p style={{ maxWidth: '280px', margin: '0.5rem auto 1.5rem auto' }}>
-            Segure seu celular com segurança e oculte sua tela dos vizinhos. Suas palavras serão transmitidas em:
+          <span className="category-badge" style={{ fontSize: '0.75rem', borderColor: 'var(--amber-orange)', color: 'var(--amber-orange)' }}>TRANSMISSÃO IMINENTE</span>
+          <h2 style={{ fontSize: '1.4rem', marginTop: '0.5rem', fontWeight: 'bold' }}>PREPARE-SE</h2>
+          <p style={{ maxWidth: '280px', margin: '0.5rem auto 1.5rem auto', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+            SINCRONIZE SUA TELA PRIVADAMENTE. AS IDENTIDADES SERÃO ENVIADAS AO DISPOSITIVO EM:
           </p>
           <div style={{
             fontSize: '6rem',
-            fontWeight: '900',
+            fontWeight: 'normal',
             fontFamily: 'var(--font-mono)',
-            color: 'var(--neon-cyan)',
-            textShadow: '0 0 25px var(--neon-cyan-glow)',
-            animation: 'scaleWarnText 1s infinite alternate',
+            color: 'var(--amber-orange)',
+            textShadow: '0 0 15px var(--amber-glow)',
             lineHeight: 1,
-            margin: '1rem 0'
+            margin: '0.5rem 0'
           }}>
             {prepTimeLeft}
           </div>
-          <div className="btn btn-glass" style={{ cursor: 'default', fontSize: '0.85rem', width: 'auto' }}>
-            🔒 Conexão Criptografada Segura
+          <div className="btn btn-glass" style={{ cursor: 'default', fontSize: '0.8rem', width: 'auto' }}>
+            CONEXÃO CRIPTOGRAFADA ATIVA
           </div>
         </div>
       )}
 
-      {/* TELA 4: PLAYING (Em Partida - Cronômetro de Visualização de 15s) */}
+      {/* TELA 4: PLAYING (Visualização Segura de 15s) */}
       {roomId && roomState && roomState.gameState === 'PLAYING' && privateGameState && (
         <div className="gameplay-screen glass-panel">
           <div className="game-header">
-            <span className="category-badge">📂 {privateGameState.category}</span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-sec)', fontFamily: 'var(--font-mono)' }}>CONFIDENCIAL</span>
+            <span className="category-badge">DIRETÓRIO: {privateGameState.category.toUpperCase()}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>CONFIDENCIAL // DETECÇÃO</span>
           </div>
 
           {/* CRONÔMETRO DE VISUALIZAÇÃO ATIVO */}
           {viewingTimeLeft > 0 ? (
             <>
-              <div style={{ margin: '0.5rem 0' }}>
-                <h2 style={{ marginBottom: '0.2rem' }}>Sua Palavra Secreta</h2>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'rgba(255, 0, 127, 0.05)', border: '1px dashed rgba(255, 0, 127, 0.3)', padding: '0.6rem 1rem', borderRadius: '12px', marginBottom: '0.8rem' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--neon-pink)', textShadow: '0 0 6px var(--neon-pink-glow)', animation: 'pulse 1s infinite alternate' }}>
-                    🚨 DESTRUIÇÃO EM: {viewingTimeLeft} segundos!
+              <div style={{ margin: '0.4rem 0' }}>
+                <h2 style={{ marginBottom: '0.2rem', fontSize: '1.1rem' }}>ARQUIVO DE IDENTIDADE</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'rgba(255, 159, 0, 0.03)', border: '1px dashed rgba(255, 159, 0, 0.25)', padding: '0.5rem 1rem', borderRadius: '4px', marginBottom: '0.6rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--amber-orange)', textShadow: '0 0 4px var(--amber-glow)' }}>
+                    AUTODESTRUIÇÃO EM: {viewingTimeLeft} SEGUNDOS
                   </span>
                 </div>
-                {/* Barra de Progresso Regressiva */}
-                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.03)', borderRadius: '2px', overflow: 'hidden', marginBottom: '0.4rem' }}>
-                  <div style={{ width: `${(viewingTimeLeft / 15) * 100}%`, height: '100%', background: 'var(--neon-pink)', boxShadow: '0 0 8px var(--neon-pink-glow)', transition: 'width 0.25s linear' }}></div>
+                {/* Barra de Progresso Rígida */}
+                <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.02)', borderRadius: '0px', overflow: 'hidden', marginBottom: '0.2rem' }}>
+                  <div style={{ width: `${(viewingTimeLeft / 15) * 100}%`, height: '100%', background: 'var(--amber-orange)', boxShadow: '0 0 5px var(--amber-glow)', transition: 'width 0.25s linear' }}></div>
                 </div>
               </div>
 
@@ -516,85 +518,84 @@ export default function App() {
                 <div className="privacy-card-inner">
                   {/* Frente do Card */}
                   <div className="privacy-card-front">
-                    <div className="shield-icon-container">🕵️‍♂️</div>
-                    <span className="shield-title">Revelar Identidade</span>
-                    <span className="shield-subtitle">Esconda a tela antes de abrir. O arquivo se autodestruirá.</span>
+                    <div className="shield-icon-container">SECURE</div>
+                    <span className="shield-title">ACESSAR FICHA</span>
+                    <span className="shield-subtitle">BLOQUEIE A VISÃO EXTERNA. O ARQUIVO SERÁ REMOVIDO DO TERMINAL.</span>
                   </div>
 
                   {/* Verso do Card (Revelado) */}
                   <div className={`privacy-card-back ${privateGameState.role === 'impostor' ? 'is-impostor' : ''}`}>
                     <span className={`role-badge-large ${privateGameState.role === 'impostor' ? 'impostor' : 'civilian'}`}>
-                      {privateGameState.role === 'impostor' ? '⚡ VOCÊ É O IMPOSTOR' : '👥 VOCÊ É CIVIL'}
+                      {privateGameState.role === 'impostor' ? 'INFILTRADO // IMPOSTOR DETECTADO' : 'AGENTE // IDENTIDADE VERIFICADA'}
                     </span>
                     
                     <span className={`secret-word-display ${privateGameState.role === 'impostor' ? 'is-impostor' : ''}`}>
-                      {privateGameState.word}
+                      {privateGameState.word.toUpperCase()}
                     </span>
 
-                    <span className="reveal-tip">Toque para esconder novamente</span>
+                    <span className="reveal-tip">TOCAR PARA PROTEGER TELA</span>
                   </div>
                 </div>
               </div>
             </>
           ) : (
-            /* SISTEMA BLOQUEADO APÓS 15 SEGUNDOS (SEM OVERLAPS, SEGURANÇA MÁXIMA) */
+            /* ARQUIVOS APAGADOS APÓS 15 SEGUNDOS (SEGURANÇA MÁXIMA) */
             <div style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'radial-gradient(circle, rgba(30, 8, 16, 0.45) 0%, rgba(4, 2, 9, 0.95) 100%)',
-              border: '2px solid rgba(255, 51, 51, 0.22)',
-              borderRadius: '24px',
-              padding: '2.4rem 1.6rem',
-              boxShadow: 'inset 0 0 20px rgba(255,51,51,0.06), var(--shadow-main)',
+              background: 'rgba(0, 0, 0, 0.9)',
+              border: '1px solid rgba(255, 51, 51, 0.3)',
+              borderRadius: '8px',
+              padding: '2.2rem 1.4rem',
+              boxShadow: 'var(--shadow-terminal)',
               textAlign: 'center',
-              margin: '0.5rem 0',
-              animation: 'fadeEnter 0.5s ease-out'
+              margin: '0.4rem 0',
+              animation: 'terminalBoot 0.4s ease-out'
             }}>
               <div style={{
-                width: '68px',
-                height: '68px',
-                borderRadius: '50%',
-                border: '2px solid var(--neon-red)',
-                background: 'rgba(255,51,51,0.04)',
+                width: '60px',
+                height: '60px',
+                border: '1px solid var(--impostor-red)',
+                background: 'rgba(255,51,51,0.03)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '2rem',
-                color: 'var(--neon-red)',
-                boxShadow: '0 0 15px rgba(255,51,51,0.3)',
-                marginBottom: '1.2rem',
-                animation: 'emergencyPulse 1s infinite alternate'
+                fontSize: '1.4rem',
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--impostor-red)',
+                boxShadow: '0 0 10px rgba(255,51,51,0.2)',
+                marginBottom: '1rem',
               }}>
-                🔒
+                LOCK
               </div>
               <span style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.9rem',
-                fontWeight: '900',
-                color: 'var(--neon-red)',
-                textShadow: '0 0 6px var(--neon-red-glow)',
-                letterSpacing: '0.12em',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                color: 'var(--impostor-red)',
+                textShadow: '0 0 4px var(--impostor-glow)',
+                letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                marginBottom: '0.4rem'
+                marginBottom: '0.3rem'
               }}>
-                ARQUIVO DESTRUÍDO
+                [DADOS APAGADOS]
               </span>
-              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff', marginBottom: '0.8rem', textTransform: 'uppercase' }}>
-                Fase de Memorização Encerrada
+              <span style={{ fontSize: '1.15rem', fontFamily: 'var(--font-mono)', color: '#fff', marginBottom: '0.6rem' }}>
+                VISUALIZAÇÃO ENCERRADA
               </span>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-sec)', margin: 0, maxWidth: '280px', lineHeight: 1.4 }}>
-                A sua palavra foi apagada da memória deste aparelho. O jogo agora está acontecendo <strong>na vida real</strong>! Debatam fisicamente e encontrem o Impostor!
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, maxWidth: '280px', lineHeight: 1.4, fontFamily: 'var(--font-sans)' }}>
+                A palavra secreta foi permanentemente expurgada deste terminal por motivos de segurança operacional. O debate e interrogatório ocorrem agora inteiramente na vida real.
               </p>
             </div>
           )}
 
-          {/* Info de Jogadores na partida */}
+          {/* Lista de Integrantes Operando */}
           <div className="crew-status-panel">
-            <span className="crew-status-title">👥 Sobreviventes na Sala ({activePlayers.length})</span>
+            <span className="crew-status-title">AGENTES EM OPERAÇÃO EM CAMPO ({activePlayers.length})</span>
             <span className="crew-status-names">
-              {activePlayers.map(p => p.nickname).join(', ')}
+              {activePlayers.map(p => p.nickname.toUpperCase()).join(' // ')}
             </span>
           </div>
 
@@ -602,137 +603,132 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
             {isHost ? (
               <button onClick={handleTriggerDiscussion} className="btn btn-accent">
-                📢 Iniciar Revelação e Debate
+                ENCERRAR TRANSMISSÃO // INICIAR DEBRIEFING
               </button>
             ) : (
               <div className="btn btn-glass" style={{ cursor: 'default', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
-                ⏳ Aguardando dono encerrar partida...
+                AGUARDANDO LÍDER ENCERRAR OPERAÇÃO...
               </div>
             )}
             <button onClick={handleLeaveRoom} className="btn btn-glass">
-              🚪 Sair do Jogo
+              DESCONECTAR CANAL
             </button>
           </div>
         </div>
       )}
 
-      {/* TELA 5: DISCUSSION (Debate / Timer / REVELAÇÃO COMPLETA DOS IMPOSTORES) */}
+      {/* TELA 5: DISCUSSION (Debriefing, Revelação do Dossiê Completo) */}
       {roomId && roomState && roomState.gameState === 'DISCUSSION' && (
         <div className="discussion-screen glass-panel">
           <div className="game-header">
-            <span className="category-badge" style={{ borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', textShadow: '0 0 4px var(--neon-pink-glow)' }}>🔥 DEBATE E VOTAÇÃO</span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-sec)', fontFamily: 'var(--font-mono)' }}>REVELADO</span>
+            <span className="category-badge" style={{ borderColor: 'var(--impostor-red)', color: 'var(--impostor-red)' }}>SESSÃO DE INTERROGATÓRIO</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>DECRYPTED</span>
           </div>
 
-          <div style={{ margin: '0.5rem 0' }}>
-            <h2 style={{ marginBottom: '0.2rem' }}>Tempo de Discussão</h2>
-            <p>Debatam quem é o Impostor na vida real e façam a sua votação final!</p>
+          <div style={{ margin: '0.4rem 0' }}>
+            <h2 style={{ marginBottom: '0.2rem', fontSize: '1.1rem' }}>TEMPO DE DISCUSSÃO</h2>
+            <p>Proceda com a investigação na vida real para identificar quem blefou ou infiltrou.</p>
           </div>
 
-          {/* Timer Progressivo Circular */}
+          {/* Timer Regressivo Rígido */}
           <div className="timer-wrapper">
             <div className={`timer-radial ${timeLeft <= 15 ? 'is-warning' : ''}`}>
-              {/* Círculo SVG de progresso */}
               <svg className="timer-svg">
-                <circle className="timer-svg-circle-bg" cx="95" cy="95" r="87" />
+                <circle className="timer-svg-circle-bg" cx="85" cy="85" r="79" />
                 <circle
                   className={`timer-svg-circle-progress ${timeLeft <= 15 ? 'is-warning' : ''}`}
-                  cx="95"
-                  cy="95"
-                  r="87"
-                  strokeDasharray={2 * Math.PI * 87}
+                  cx="85"
+                  cy="85"
+                  r="79"
+                  strokeDasharray={2 * Math.PI * 79}
                   strokeDashoffset={
                     roomState.settings.timerDuration > 0
-                      ? (2 * Math.PI * 87) * (1 - timeLeft / roomState.settings.timerDuration)
+                      ? (2 * Math.PI * 79) * (1 - timeLeft / roomState.settings.timerDuration)
                       : 0
                   }
                 />
               </svg>
 
-              {/* Exibição Numérica */}
               <span className={`timer-numeric-display ${timeLeft <= 15 ? 'is-warning' : ''}`}>
                 {formatTime(timeLeft)}
               </span>
-              <span className={`timer-label ${timeLeft <= 15 ? 'is-warning' : ''}`}>Restantes</span>
+              <span className={`timer-label ${timeLeft <= 15 ? 'is-warning' : ''}`}>RESTANTES</span>
             </div>
           </div>
 
-          {/* 🔥 100% REVELAÇÃO DOS IMPOSTORES / CIVIS (FEATURE SUPER PEDIDA!) */}
+          {/* REVELAÇÃO DOS IMPOSTORES (DOSSIÊ INTEGRAL - CLASSIFICADO) */}
           {roomState.revealedRoles && (
             <div style={{
               textAlign: 'left',
-              background: 'rgba(4, 2, 9, 0.6)',
-              border: '1px solid rgba(157, 78, 221, 0.2)',
-              borderRadius: '20px',
-              padding: '1.2rem',
-              boxShadow: 'inset 0 0 15px rgba(0, 0, 0, 0.5)',
+              background: 'rgba(0, 0, 0, 0.85)',
+              border: '1px solid rgba(255, 159, 0, 0.15)',
+              borderRadius: '8px',
+              padding: '1rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem'
+              gap: '0.6rem'
             }}>
               <span style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.8rem',
-                fontWeight: '900',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
                 textTransform: 'uppercase',
-                color: 'var(--neon-cyan)',
-                textShadow: '0 0 6px var(--neon-cyan-glow)',
+                color: 'var(--amber-orange)',
                 letterSpacing: '0.05em',
                 display: 'block',
-                borderBottom: '1px dashed rgba(0, 245, 212, 0.25)',
-                paddingBottom: '0.4rem',
+                borderBottom: '1px dashed rgba(255, 159, 0, 0.2)',
+                paddingBottom: '0.3rem',
                 margin: 0
               }}>
-                🔎 DOSSIÊ DA RODADA (REVELADO)
+                DOSSIÊ DESCRIPTOGRAFADO // HISTÓRICO
               </span>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {/* 1. Impostores Primeiro com Roxo/Rosa Pulsante */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {/* 1. Impostores Primeiro em Vermelho */}
                 {roomState.revealedRoles.filter(p => p.role === 'impostor').map((p, idx) => (
                   <div key={`imp-${idx}`} style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    background: 'rgba(255, 0, 127, 0.05)',
-                    border: '1px solid rgba(255, 0, 127, 0.25)',
-                    padding: '0.65rem 0.9rem',
-                    borderRadius: '12px',
-                    boxShadow: '0 0 8px rgba(255,0,127,0.03)'
+                    background: 'rgba(255, 51, 51, 0.03)',
+                    border: '1px solid rgba(255, 51, 51, 0.2)',
+                    padding: '0.5rem 0.8rem',
+                    borderRadius: '4px'
                   }}>
-                    <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.9rem' }}>
-                      😈 {p.nickname}
+                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
+                      SUSPEITO: {p.nickname.toUpperCase()}
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span className="badge" style={{ background: 'rgba(255, 0, 127, 0.2)', color: 'var(--neon-pink)', border: '1px solid rgba(255,0,127,0.4)', fontSize: '0.6rem', padding: '0.15rem 0.35rem' }}>
-                        Impostor
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span className="badge" style={{ background: 'rgba(255, 51, 51, 0.1)', color: 'var(--impostor-red)', border: '1px solid rgba(255,51,51,0.3)', fontSize: '0.6rem', padding: '0.05rem 0.25rem' }}>
+                        INFILTRADO
                       </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: '900', color: 'var(--neon-pink)', textShadow: '0 0 4px var(--neon-pink-glow)' }}>
-                        "{p.word}"
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--impostor-red)', fontWeight: 'bold' }}>
+                        "{p.word.toUpperCase()}"
                       </span>
                     </div>
                   </div>
                 ))}
 
-                {/* 2. Civis Depois com Ciano Neon */}
+                {/* 2. Civis Depois em Verde */}
                 {roomState.revealedRoles.filter(p => p.role === 'civilian').map((p, idx) => (
                   <div key={`civ-${idx}`} style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    background: 'rgba(0, 245, 212, 0.01)',
-                    border: '1px solid rgba(0, 245, 212, 0.1)',
-                    padding: '0.65rem 0.9rem',
-                    borderRadius: '12px'
+                    background: 'rgba(0, 230, 118, 0.01)',
+                    border: '1px solid rgba(0, 230, 118, 0.08)',
+                    padding: '0.5rem 0.8rem',
+                    borderRadius: '4px'
                   }}>
-                    <span style={{ color: 'var(--text-sec)', fontWeight: '600', fontSize: '0.9rem' }}>
-                      👥 {p.nickname}
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
+                      AGENTE: {p.nickname.toUpperCase()}
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span className="badge" style={{ background: 'rgba(0, 245, 212, 0.08)', color: 'var(--neon-cyan)', border: '1px solid rgba(0,245,212,0.2)', fontSize: '0.6rem', padding: '0.15rem 0.35rem' }}>
-                        Civil
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span className="badge" style={{ background: 'rgba(0, 230, 118, 0.05)', color: 'var(--agent-green)', border: '1px solid rgba(0,230,118,0.15)', fontSize: '0.6rem', padding: '0.05rem 0.25rem' }}>
+                        AGENTE
                       </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--neon-cyan)' }}>
-                        "{p.word}"
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--agent-green)', fontWeight: 'bold' }}>
+                        "{p.word.toUpperCase()}"
                       </span>
                     </div>
                   </div>
@@ -741,20 +737,20 @@ export default function App() {
             </div>
           )}
 
-          {/* Dica de Discussão */}
+          {/* Diretriz Operacional */}
           <div className="hud-tips">
-            💡 <strong>Debriefing:</strong> O Impostor conseguiu descobrir a palavra secreta dos Civis? Ele soube mentir na vida real? Analisem a jogabilidade da rodada!
+            DIRETRIZ DE INVESTIGAÇÃO: O Infiltrado conseguiu decifrar a palavra-chave dos agentes? Ele manteve a cobertura operacional? Faça o balanço do interrogatório.
           </div>
 
           {/* Botões da Discussão */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
             {isHost && (
               <button onClick={handleEndDiscussion} className="btn btn-primary">
-                ⏭️ Encerrar e Voltar ao Lobby
+                REINICIAR CANAL // VOLTAR AO LOBBY
               </button>
             )}
             <button onClick={handleLeaveRoom} className="btn btn-glass">
-              🚪 Sair do Jogo
+              DESCONECTAR CANAL
             </button>
           </div>
         </div>
@@ -762,7 +758,7 @@ export default function App() {
 
       {/* FOOTER */}
       <footer className="app-footer">
-        Desenvolvido com ❤️ | Impostorgamefipp
+        CLASSIFIED DATA SYSTEM // IMPOSTORGAMEFIPP
       </footer>
     </div>
   );
