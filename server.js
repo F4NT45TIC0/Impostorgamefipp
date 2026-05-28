@@ -341,12 +341,28 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 7. VOLTAR PARA O LOBBY (APENAS HOST)
+  // 7. REVELAR IMPOSTORES // DESCRIPTOGRAFAR DOSSIÊ (APENAS HOST)
   socket.on('end_discussion', () => {
     const { room, player } = getRoomAndPlayer(socket.id);
     if (!room || !player || !player.isHost) return;
 
-    if (room.gameState === 'DISCUSSION' || room.gameState === 'PLAYING') {
+    if (room.gameState === 'DISCUSSION') {
+      if (room.discussionTimeoutId) {
+        clearTimeout(room.discussionTimeoutId);
+        room.discussionTimeoutId = null;
+      }
+      room.gameState = 'REVEAL';
+      io.to(room.id).emit('room_state', getPublicRoomState(room));
+      console.log(`Dossiê descriptografado na sala ${room.id}. Infiltrados revelados.`);
+    }
+  });
+
+  // 7.5 REINICIAR CANAL E VOLTAR AO LOBBY (APENAS HOST)
+  socket.on('restart_lobby', () => {
+    const { room, player } = getRoomAndPlayer(socket.id);
+    if (!room || !player || !player.isHost) return;
+
+    if (room.gameState === 'REVEAL') {
       resetRoomToLobby(room);
     }
   });
@@ -389,11 +405,13 @@ function resetRoomToLobby(room) {
   console.log(`Sala ${room.id} retornou ao lobby.`);
 }
 
-// Encerramento automático quando o timer de discussão zera
+// Encerramento automático quando o timer de discussão zera (Transiciona para REVEAL)
 function autoEndDiscussion(roomId) {
   const room = rooms.get(roomId);
   if (room && room.gameState === 'DISCUSSION') {
-    resetRoomToLobby(room);
+    room.gameState = 'REVEAL';
+    io.to(room.id).emit('room_state', getPublicRoomState(room));
+    console.log(`Discussão encerrada por tempo na sala ${room.id}. Revelando infiltrados.`);
   }
 }
 

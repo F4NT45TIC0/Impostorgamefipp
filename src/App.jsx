@@ -235,7 +235,11 @@ export default function App() {
   };
 
   const handleEndDiscussion = () => {
-    socket.emit('end_discussion');
+    socket.emit('end_discussion'); // Triga a transição para REVEAL
+  };
+
+  const handleRestartLobby = () => {
+    socket.emit('restart_lobby'); // Reseta para LOBBY
   };
 
   // 📋 UTILITÁRIOS
@@ -461,7 +465,7 @@ export default function App() {
         </div>
       )}
 
-      {/* TELA 3: PREPARING (5s de Contagem Regressiva de Segurança - Altamente Clínico) */}
+      {/* TELA 3: PREPARING (5s de Contagem Regressiva de Segurança) */}
       {roomId && roomState && roomState.gameState === 'PREPARING' && (
         <div className="glass-panel welcome-screen" style={{ textAlign: 'center', alignItems: 'center' }}>
           <span className="category-badge" style={{ fontSize: '0.75rem', borderColor: 'var(--amber-orange)', color: 'var(--amber-orange)' }}>TRANSMISSÃO IMINENTE</span>
@@ -539,7 +543,7 @@ export default function App() {
               </div>
             </>
           ) : (
-            /* ARQUIVOS APAGADOS APÓS 15 SEGUNDOS (SEGURANÇA MÁXIMA) */
+            /* ARQUIVOS APAGADOS APÓS 15 SEGUNDOS */
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -617,12 +621,12 @@ export default function App() {
         </div>
       )}
 
-      {/* TELA 5: DISCUSSION (Debriefing, Revelação do Dossiê Completo) */}
+      {/* TELA 5: DISCUSSION (Debate / Timer Ativo - IMPOSTORES OCULTOS!) */}
       {roomId && roomState && roomState.gameState === 'DISCUSSION' && (
         <div className="discussion-screen glass-panel">
           <div className="game-header">
             <span className="category-badge" style={{ borderColor: 'var(--impostor-red)', color: 'var(--impostor-red)' }}>SESSÃO DE INTERROGATÓRIO</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>DECRYPTED</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>DECRYPTING</span>
           </div>
 
           <div style={{ margin: '0.4rem 0' }}>
@@ -656,17 +660,62 @@ export default function App() {
             </div>
           </div>
 
-          {/* REVELAÇÃO DOS IMPOSTORES (DOSSIÊ INTEGRAL - CLASSIFICADO) */}
+          {/* Diretriz Operacional */}
+          <div className="hud-tips">
+            DIRETRIZ DE INVESTIGAÇÃO: Debatam ativamente na vida real. Façam o interrogatório, o Infiltrado não foi revelado nos sistemas ainda. Decidam seus votos!
+          </div>
+
+          {/* Lista de Agentes para Investigar */}
+          <div className="crew-status-panel">
+            <span className="crew-status-title">INTEGRANTES NA SESSÃO DE DEBATE</span>
+            <span className="crew-status-names" style={{ color: '#fff' }}>
+              {activePlayers.map(p => p.nickname.toUpperCase()).join(' // ')}
+            </span>
+          </div>
+
+          {/* Botões da Discussão */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+            {isHost ? (
+              <button onClick={handleEndDiscussion} className="btn btn-primary">
+                DESCRIPTOGRAFAR DOSSIÊ // REVELAR INFILTRADO
+              </button>
+            ) : (
+              <div className="btn btn-glass" style={{ cursor: 'default', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                AGUARDANDO LÍDER REVELAR DOSSIÊ...
+              </div>
+            )}
+            <button onClick={handleLeaveRoom} className="btn btn-glass">
+              DESCONECTAR CANAL
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TELA 6: REVEAL (Debriefing final, exibe a verdade após o debate) */}
+      {roomId && roomState && roomState.gameState === 'REVEAL' && (
+        <div className="discussion-screen glass-panel">
+          <div className="game-header">
+            <span className="category-badge" style={{ borderColor: 'var(--agent-green)', color: 'var(--agent-green)', textShadow: '0 0 4px var(--agent-glow)' }}>ARQUIVOS DESCRIPTOGRAFADOS</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>DECOMPRESSED</span>
+          </div>
+
+          <div style={{ margin: '0.4rem 0' }}>
+            <h2 style={{ marginBottom: '0.2rem', fontSize: '1.1rem' }}>DEBRIEFING DA RODADA</h2>
+            <p>Todos os dados operacionais foram expostos. Analisem os resultados.</p>
+          </div>
+
+          {/* 🔍 DOSSIÊ COMPLETO REVELADO DEPOIS DO DEBATE! */}
           {roomState.revealedRoles && (
             <div style={{
               textAlign: 'left',
               background: 'rgba(0, 0, 0, 0.85)',
               border: '1px solid rgba(255, 159, 0, 0.15)',
               borderRadius: '8px',
-              padding: '1rem',
+              padding: '1.2rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.6rem'
+              gap: '0.6rem',
+              margin: '0.5rem 0'
             }}>
               <span style={{
                 fontFamily: 'var(--font-mono)',
@@ -680,19 +729,19 @@ export default function App() {
                 paddingBottom: '0.3rem',
                 margin: 0
               }}>
-                DOSSIÊ DESCRIPTOGRAFADO // HISTÓRICO
+                DOSSIÊ DA RODADA ATIVA // VERDADE EXPOSTA
               </span>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {/* 1. Impostores Primeiro em Vermelho */}
+                {/* 1. Impostores em Vermelho */}
                 {roomState.revealedRoles.filter(p => p.role === 'impostor').map((p, idx) => (
                   <div key={`imp-${idx}`} style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    background: 'rgba(255, 51, 51, 0.03)',
-                    border: '1px solid rgba(255, 51, 51, 0.2)',
-                    padding: '0.5rem 0.8rem',
+                    background: 'rgba(255, 51, 51, 0.04)',
+                    border: '1px solid rgba(255, 51, 51, 0.25)',
+                    padding: '0.55rem 0.8rem',
                     borderRadius: '4px'
                   }}>
                     <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
@@ -702,14 +751,14 @@ export default function App() {
                       <span className="badge" style={{ background: 'rgba(255, 51, 51, 0.1)', color: 'var(--impostor-red)', border: '1px solid rgba(255,51,51,0.3)', fontSize: '0.6rem', padding: '0.05rem 0.25rem' }}>
                         INFILTRADO
                       </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--impostor-red)', fontWeight: 'bold' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--impostor-red)', fontWeight: 'bold', textShadow: '0 0 4px var(--impostor-glow)' }}>
                         "{p.word.toUpperCase()}"
                       </span>
                     </div>
                   </div>
                 ))}
 
-                {/* 2. Civis Depois em Verde */}
+                {/* 2. Civis em Verde */}
                 {roomState.revealedRoles.filter(p => p.role === 'civilian').map((p, idx) => (
                   <div key={`civ-${idx}`} style={{
                     display: 'flex',
@@ -717,7 +766,7 @@ export default function App() {
                     alignItems: 'center',
                     background: 'rgba(0, 230, 118, 0.01)',
                     border: '1px solid rgba(0, 230, 118, 0.08)',
-                    padding: '0.5rem 0.8rem',
+                    padding: '0.55rem 0.8rem',
                     borderRadius: '4px'
                   }}>
                     <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
@@ -737,17 +786,21 @@ export default function App() {
             </div>
           )}
 
-          {/* Diretriz Operacional */}
-          <div className="hud-tips">
-            DIRETRIZ DE INVESTIGAÇÃO: O Infiltrado conseguiu decifrar a palavra-chave dos agentes? Ele manteve a cobertura operacional? Faça o balanço do interrogatório.
+          {/* Diretriz Operacional Pós-Jogo */}
+          <div className="hud-tips" style={{ borderLeftColor: 'var(--agent-green)' }}>
+            DIRETRIZ FINAL: Analisem a performance de infiltração. Como o espião conseguiu se disfarçar? Quando a sala for recomposta, ajuste os parâmetros e inicie uma nova rodada.
           </div>
 
-          {/* Botões da Discussão */}
+          {/* Botões do Painel de Revelação */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-            {isHost && (
-              <button onClick={handleEndDiscussion} className="btn btn-primary">
-                REINICIAR CANAL // VOLTAR AO LOBBY
+            {isHost ? (
+              <button onClick={handleRestartLobby} className="btn btn-primary">
+                RECOMPOR SALA // VOLTAR AO LOBBY
               </button>
+            ) : (
+              <div className="btn btn-glass" style={{ cursor: 'default', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                AGUARDANDO LÍDER RECOMPOR SALA...
+              </div>
             )}
             <button onClick={handleLeaveRoom} className="btn btn-glass">
               DESCONECTAR CANAL
