@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Qualquer outra rota serve o index.html do React (SPA routing)
-app.get('*', (req, res) => {
+app.get('/*splat', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
