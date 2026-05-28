@@ -654,6 +654,37 @@ export default function App() {
               <span style={{ fontSize: '1.15rem', fontFamily: 'var(--font-mono)', color: '#fff', marginBottom: '0.6rem' }}>
                 VISUALIZAÇÃO ENCERRADA
               </span>
+              {roomState.starterPlayer && (
+                <div style={{
+                  width: '100%',
+                  border: '1px dashed rgba(255, 159, 0, 0.25)',
+                  background: 'rgba(255, 159, 0, 0.04)',
+                  borderRadius: '4px',
+                  padding: '0.75rem 0.9rem',
+                  marginBottom: '0.8rem',
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase'
+                }}>
+                  <span style={{
+                    display: 'block',
+                    fontSize: '0.68rem',
+                    color: 'var(--text-secondary)',
+                    letterSpacing: '0.08em',
+                    marginBottom: '0.25rem'
+                  }}>
+                    INICIAR RODADA NA VIDA REAL
+                  </span>
+                  <span style={{
+                    display: 'block',
+                    fontSize: '1.2rem',
+                    color: 'var(--amber-orange)',
+                    textShadow: '0 0 6px var(--amber-glow)',
+                    overflowWrap: 'anywhere'
+                  }}>
+                    {roomState.starterPlayer.nickname.toUpperCase()}
+                  </span>
+                </div>
+              )}
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, maxWidth: '280px', lineHeight: 1.4, fontFamily: 'var(--font-sans)' }}>
                 A palavra secreta foi permanentemente expurgada deste terminal por motivos de segurança operacional. O debate e interrogatório ocorrem agora inteiramente na vida real.
               </p>

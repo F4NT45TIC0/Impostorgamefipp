@@ -66,6 +66,7 @@ function getPublicRoomState(room) {
     prepEndTime: room.prepEndTime,
     viewingEndTime: room.viewingEndTime,
     discussionEndTime: room.discussionEndTime,
+    starterPlayer: room.starterPlayer,
     players: room.players.map(p => ({
       id: p.id,
       nickname: p.nickname,
@@ -119,6 +120,7 @@ io.on('connection', (socket) => {
       },
       players: [newPlayer],
       currentWords: { civilian: '', impostor: '', category: '' },
+      starterPlayer: null,
       discussionEndTime: null,
       discussionTimeoutId: null
     };
@@ -290,6 +292,7 @@ io.on('connection', (socket) => {
       room.gameState = 'PREPARING';
       room.prepEndTime = Date.now() + 5000;
       room.viewingEndTime = null;
+      room.starterPlayer = null;
 
       io.to(room.id).emit('room_state', getPublicRoomState(room));
       console.log(`Sala ${room.id} em fase de PREPARAÇÃO por 5 segundos.`);
@@ -334,6 +337,7 @@ io.on('connection', (socket) => {
         // Transiciona para JOGANDO e estabelece o cronômetro de 15 segundos para visualização
         currentRoom.gameState = 'PLAYING';
         currentRoom.viewingEndTime = Date.now() + 15000;
+        currentRoom.starterPlayer = pickStarterPlayer(currentActivePlayers);
 
         io.to(currentRoom.id).emit('room_state', getPublicRoomState(currentRoom));
         console.log(`Jogo iniciado na sala ${currentRoom.id}. Categoria: ${wordPair.category}. 15s para memorização.`);
@@ -421,6 +425,7 @@ function resetRoomToLobby(room) {
   room.gameState = 'LOBBY';
   room.discussionEndTime = null;
   room.currentWords = { civilian: '', impostor: '', category: '' };
+  room.starterPlayer = null;
 
   // Reseta estado dos jogadores
   room.players.forEach(p => {
@@ -458,6 +463,16 @@ function sendPrivateGameData(target, room, player) {
     category: room.currentWords.category,
     serverTime: Date.now()
   });
+}
+
+function pickStarterPlayer(players) {
+  if (!players.length) return null;
+
+  const starter = players[Math.floor(Math.random() * players.length)];
+  return {
+    id: starter.id,
+    nickname: starter.nickname
+  };
 }
 
 // Remove jogador ou gerencia desconexão temporária
