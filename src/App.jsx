@@ -12,7 +12,7 @@ export default function App() {
   const [roomId, setRoomId] = useState(null);
   
   const [roomState, setRoomState] = useState(null);
-  const [privateGameState, setPrivateGameState] = useState(null); // { role, word, category }
+  const [privateGameState, setPrivateGameState] = useState(null); // { word, category }
   
   const [errorMsg, setErrorMsg] = useState(null);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -528,12 +528,12 @@ export default function App() {
                   </div>
 
                   {/* Verso do Card (Revelado) */}
-                  <div className={`privacy-card-back ${privateGameState.role === 'impostor' ? 'is-impostor' : ''}`}>
-                    <span className={`role-badge-large ${privateGameState.role === 'impostor' ? 'impostor' : 'civilian'}`}>
-                      {privateGameState.role === 'impostor' ? 'INFILTRADO // IMPOSTOR DETECTADO' : 'AGENTE // IDENTIDADE VERIFICADA'}
+                  <div className="privacy-card-back">
+                    <span className="role-badge-large civilian">
+                      REVELAR PALAVRA
                     </span>
                     
-                    <span className={`secret-word-display ${privateGameState.role === 'impostor' ? 'is-impostor' : ''}`}>
+                    <span className="secret-word-display">
                       {privateGameState.word.toUpperCase()}
                     </span>
 

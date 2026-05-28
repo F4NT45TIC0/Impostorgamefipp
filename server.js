@@ -159,9 +159,8 @@ io.on('connection', (socket) => {
         
         io.to(code).emit('room_state', getPublicRoomState(room));
         
-        // Envia as informações privadas do jogador novamente
+        // Envia novamente apenas a palavra privada. O papel fica oculto ate o debriefing.
         socket.emit('game_started', {
-          role: existingPlayer.role,
           word: existingPlayer.word,
           category: room.currentWords.category
         });
@@ -294,9 +293,8 @@ io.on('connection', (socket) => {
               p.role = 'civilian';
               p.word = currentRoom.currentWords.civilian;
             }
-            // Envia de forma privada para cada jogador
+            // Envia de forma privada apenas a palavra para cada jogador.
             io.to(p.id).emit('game_started', {
-              role: p.role,
               word: p.word,
               category: currentRoom.currentWords.category
             });
