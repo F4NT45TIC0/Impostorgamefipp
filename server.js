@@ -76,8 +76,8 @@ function getPublicRoomState(room) {
     availableCategories: ['Aleatório', ...getCategories()]
   };
 
-  // Ao iniciar a discussão, revela a identidade de todos para o painel de debriefing
-  if (room.gameState === 'DISCUSSION') {
+  // Ao iniciar a revelação, envia a identidade de todos para o painel de debriefing
+  if (room.gameState === 'REVEAL') {
     state.revealedRoles = room.players.map(p => ({
       nickname: p.nickname,
       role: p.role,
