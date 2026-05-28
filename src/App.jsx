@@ -26,17 +26,41 @@ export default function App() {
   const timerIntervalRef = useRef(null);
   const prepIntervalRef = useRef(null);
   const viewingIntervalRef = useRef(null);
+  const roomIdRef = useRef(null);
+  const nicknameRef = useRef(nickname);
+  const serverOffsetRef = useRef(0);
+
+  useEffect(() => {
+    roomIdRef.current = roomId;
+  }, [roomId]);
+
+  useEffect(() => {
+    nicknameRef.current = nickname;
+  }, [nickname]);
 
   // Inicializar o socket uma única vez
   useEffect(() => {
     socket = io(SOCKET_URL, {
-      transports: ['websocket'],
       autoConnect: true
     });
+
+    const syncCurrentRoom = () => {
+      if (roomIdRef.current && nicknameRef.current.trim()) {
+        socket.emit('sync_room', {
+          roomId: roomIdRef.current,
+          nickname: nicknameRef.current
+        });
+      }
+    };
 
     // Ouvintes globais de socket
     socket.on('connect', () => {
       console.log('Conexão estabelecida com o mainframe.');
+      syncCurrentRoom();
+    });
+
+    socket.on('reconnect', () => {
+      syncCurrentRoom();
     });
 
     socket.on('room_created', (code) => {
@@ -45,6 +69,7 @@ export default function App() {
     });
 
     socket.on('room_state', (state) => {
+      updateServerOffset(state.serverTime);
       setRoomState(state);
       setRoomId(state.id);
       
@@ -59,23 +84,36 @@ export default function App() {
         setPrepTimeLeft(0);
         setViewingTimeLeft(0);
       }
+
+      if (state.gameState !== 'DISCUSSION' && timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+        setTimeLeft(0);
+      }
     });
 
     socket.on('game_started', (privateData) => {
+      updateServerOffset(privateData.serverTime);
       setPrivateGameState(privateData);
       setCardRevealed(false); // Garante que começa fechado (por privacidade)
     });
 
-    socket.on('discussion_started', ({ endTime }) => {
+    socket.on('discussion_started', ({ endTime, serverTime }) => {
+      updateServerOffset(serverTime);
       startLocalTimer(endTime);
     });
 
     socket.on('discussion_ended', () => {
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
       }
       setTimeLeft(0);
     });
+
+    document.addEventListener('visibilitychange', syncCurrentRoom);
+    window.addEventListener('focus', syncCurrentRoom);
+    window.addEventListener('pageshow', syncCurrentRoom);
 
     socket.on('error_message', (msg) => {
       setErrorMsg(msg);
@@ -87,12 +125,16 @@ export default function App() {
 
     return () => {
       socket.off('connect');
+      socket.off('reconnect');
       socket.off('room_created');
       socket.off('room_state');
       socket.off('game_started');
       socket.off('discussion_started');
       socket.off('discussion_ended');
       socket.off('error_message');
+      document.removeEventListener('visibilitychange', syncCurrentRoom);
+      window.removeEventListener('focus', syncCurrentRoom);
+      window.removeEventListener('pageshow', syncCurrentRoom);
       socket.disconnect();
     };
   }, []);
@@ -110,7 +152,7 @@ export default function App() {
       if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
       
       const updatePrep = () => {
-        const diff = roomState.prepEndTime - Date.now();
+        const diff = roomState.prepEndTime - getSyncedNow();
         const secs = Math.max(0, Math.ceil(diff / 1000));
         setPrepTimeLeft(secs);
         if (secs <= 0) {
@@ -129,7 +171,7 @@ export default function App() {
       if (viewingIntervalRef.current) clearInterval(viewingIntervalRef.current);
       
       const updateViewing = () => {
-        const diff = roomState.viewingEndTime - Date.now();
+        const diff = roomState.viewingEndTime - getSyncedNow();
         const secs = Math.max(0, Math.ceil(diff / 1000));
         setViewingTimeLeft(secs);
         if (secs <= 0) {
@@ -149,11 +191,33 @@ export default function App() {
     };
   }, [roomState]);
 
+  useEffect(() => {
+    if (
+      roomState &&
+      roomState.gameState !== 'LOBBY' &&
+      !privateGameState &&
+      roomId &&
+      nickname.trim()
+    ) {
+      socket?.emit('sync_room', { roomId, nickname });
+    }
+  }, [roomState, privateGameState, roomId, nickname]);
+
   // Persistir apelido localmente ao alterar
   const handleNicknameChange = (val) => {
     setNickname(val);
     localStorage.setItem('impostor_nickname', val);
   };
+
+  function updateServerOffset(serverTime) {
+    if (typeof serverTime === 'number') {
+      serverOffsetRef.current = serverTime - Date.now();
+    }
+  }
+
+  function getSyncedNow() {
+    return Date.now() + serverOffsetRef.current;
+  }
 
   // Temporizador sincronizado localmente com o timestamp do servidor para a Discussão
   const startLocalTimer = (endTime) => {
@@ -162,12 +226,13 @@ export default function App() {
     }
 
     const updateTimer = () => {
-      const remainingMs = endTime - Date.now();
+      const remainingMs = endTime - getSyncedNow();
       const remainingSecs = Math.max(0, Math.ceil(remainingMs / 1000));
       setTimeLeft(remainingSecs);
 
       if (remainingSecs <= 0) {
         clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
       }
     };
 

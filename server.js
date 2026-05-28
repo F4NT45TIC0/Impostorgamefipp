@@ -61,6 +61,7 @@ function getPublicRoomState(room) {
   const state = {
     id: room.id,
     gameState: room.gameState,
+    serverTime: Date.now(),
     settings: room.settings,
     prepEndTime: room.prepEndTime,
     viewingEndTime: room.viewingEndTime,
@@ -160,13 +161,13 @@ io.on('connection', (socket) => {
         io.to(code).emit('room_state', getPublicRoomState(room));
         
         // Envia novamente apenas a palavra privada. O papel fica oculto ate o debriefing.
-        socket.emit('game_started', {
-          word: existingPlayer.word,
-          category: room.currentWords.category
-        });
+        sendPrivateGameData(socket, room, existingPlayer);
         
         if (room.gameState === 'DISCUSSION') {
-          socket.emit('discussion_started', { endTime: room.discussionEndTime });
+          socket.emit('discussion_started', {
+            endTime: room.discussionEndTime,
+            serverTime: Date.now()
+          });
         }
         return;
       }
@@ -199,6 +200,38 @@ io.on('connection', (socket) => {
 
     io.to(code).emit('room_state', getPublicRoomState(room));
     console.log(`Jogador ${name} entrou na sala ${code}`);
+  });
+
+  // 2.5 SINCRONIZAR APOS RECONEXAO / CELULAR VOLTAR DA TELA BLOQUEADA
+  socket.on('sync_room', ({ roomId, nickname }) => {
+    if (!roomId || !nickname) return;
+
+    const code = roomId.toUpperCase().trim();
+    const name = nickname.trim();
+    const room = rooms.get(code);
+    if (!room || name === '') return;
+
+    const player = room.players.find(p =>
+      p.id === socket.id || p.nickname.toLowerCase() === name.toLowerCase()
+    );
+    if (!player) return;
+
+    player.id = socket.id;
+    player.connected = true;
+    socket.join(code);
+
+    socket.emit('room_state', getPublicRoomState(room));
+
+    if (room.gameState !== 'LOBBY' && player.word) {
+      sendPrivateGameData(socket, room, player);
+    }
+
+    if (room.gameState === 'DISCUSSION') {
+      socket.emit('discussion_started', {
+        endTime: room.discussionEndTime,
+        serverTime: Date.now()
+      });
+    }
   });
 
   // 3. ALTERNAR PRONTO
@@ -294,10 +327,7 @@ io.on('connection', (socket) => {
               p.word = currentRoom.currentWords.civilian;
             }
             // Envia de forma privada apenas a palavra para cada jogador.
-            io.to(p.id).emit('game_started', {
-              word: p.word,
-              category: currentRoom.currentWords.category
-            });
+            sendPrivateGameData(io.to(p.id), currentRoom, p);
           }
         });
 
@@ -322,7 +352,10 @@ io.on('connection', (socket) => {
       const durationMs = room.settings.timerDuration * 1000;
       room.discussionEndTime = Date.now() + durationMs;
 
-      io.to(room.id).emit('discussion_started', { endTime: room.discussionEndTime });
+      io.to(room.id).emit('discussion_started', {
+        endTime: room.discussionEndTime,
+        serverTime: Date.now()
+      });
       io.to(room.id).emit('room_state', getPublicRoomState(room));
 
       // Limpa qualquer timeout anterior por garantia
@@ -350,6 +383,7 @@ io.on('connection', (socket) => {
         room.discussionTimeoutId = null;
       }
       room.gameState = 'REVEAL';
+      io.to(room.id).emit('discussion_ended');
       io.to(room.id).emit('room_state', getPublicRoomState(room));
       console.log(`Dossiê descriptografado na sala ${room.id}. Infiltrados revelados.`);
     }
@@ -407,10 +441,23 @@ function resetRoomToLobby(room) {
 function autoEndDiscussion(roomId) {
   const room = rooms.get(roomId);
   if (room && room.gameState === 'DISCUSSION') {
+    if (room.discussionTimeoutId) {
+      clearTimeout(room.discussionTimeoutId);
+      room.discussionTimeoutId = null;
+    }
     room.gameState = 'REVEAL';
+    io.to(room.id).emit('discussion_ended');
     io.to(room.id).emit('room_state', getPublicRoomState(room));
     console.log(`Discussão encerrada por tempo na sala ${room.id}. Revelando infiltrados.`);
   }
+}
+
+function sendPrivateGameData(target, room, player) {
+  target.emit('game_started', {
+    word: player.word,
+    category: room.currentWords.category,
+    serverTime: Date.now()
+  });
 }
 
 // Remove jogador ou gerencia desconexão temporária
