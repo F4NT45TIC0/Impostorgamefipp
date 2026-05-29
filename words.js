@@ -320,57 +320,6 @@ export const wordCategories = {
     { civilian: "Pudim", impostor: "Mousse" },
     { civilian: "Sorvete", impostor: "Acai" },
     { civilian: "Pipoca", impostor: "Nachos" }
-  ],
-  "Piadas Ruins": [
-    { civilian: "Trocadilho", impostor: "Piada de Tiozao" },
-    { civilian: "Pave", impostor: "Pacume" },
-    { civilian: "Humor Seco", impostor: "Ironia" },
-    { civilian: "Piada Interna", impostor: "Memoria Vergonhosa" },
-    { civilian: "Silencio Constrangedor", impostor: "Riso Forcado" },
-    { civilian: "Vergonha Alheia", impostor: "Mico" },
-    { civilian: "Cantada Ruim", impostor: "Xaveco Fraco" },
-    { civilian: "Meme Antigo", impostor: "Audio Estourado" },
-    { civilian: "Pegadinha", impostor: "Trollagem" },
-    { civilian: "Resposta Atravessada", impostor: "Corte Seco" },
-    { civilian: "Deboche", impostor: "Sarcasmo" },
-    { civilian: "Piada Sem Graca", impostor: "Comentário Infeliz" },
-    { civilian: "Climao", impostor: "Saia Justa" },
-    { civilian: "Rir de Nervoso", impostor: "Disfarcar o Riso" },
-    { civilian: "Historia Mal Contada", impostor: "Desculpa Esfarrapada" }
-  ],
-  "Duplo Sentido": [
-    { civilian: "Banana", impostor: "Pepino" },
-    { civilian: "Linguiça", impostor: "Salsicha" },
-    { civilian: "Manga", impostor: "Melancia" },
-    { civilian: "Pau de Selfie", impostor: "Tripé" },
-    { civilian: "Entrar", impostor: "Sair" },
-    { civilian: "Subir", impostor: "Descer" },
-    { civilian: "Molhado", impostor: "Escorregadio" },
-    { civilian: "Quente", impostor: "Pegando Fogo" },
-    { civilian: "Apertado", impostor: "Justo" },
-    { civilian: "Grande", impostor: "Enorme" },
-    { civilian: "Pequeno", impostor: "Miudo" },
-    { civilian: "Bater", impostor: "Mexer" },
-    { civilian: "Encaixar", impostor: "Empurrar" },
-    { civilian: "Furar", impostor: "Espetar" },
-    { civilian: "Amassar", impostor: "Apertar" }
-  ],
-  "Tretas e Constrangimentos": [
-    { civilian: "Fofoca", impostor: "Boato" },
-    { civilian: "Exposed", impostor: "Print Vazado" },
-    { civilian: "Visto por Ultimo", impostor: "Mensagem Visualizada" },
-    { civilian: "Grupo Silenciado", impostor: "Mensagem Ignorada" },
-    { civilian: "Cancelamento", impostor: "Critica Pesada" },
-    { civilian: "Discussao de Familia", impostor: "Almoco de Domingo" },
-    { civilian: "DR", impostor: "Conversa Seria" },
-    { civilian: "Amizade Colorida", impostor: "Crush Secreto" },
-    { civilian: "Conta Dividida", impostor: "Pix Esquecido" },
-    { civilian: "Chegar Atrasado", impostor: "Furar o Role" },
-    { civilian: "Mentira Pequena", impostor: "Desculpa Ruim" },
-    { civilian: "Segredo Vazado", impostor: "Conversa Printada" },
-    { civilian: "Olhar Torto", impostor: "Indireta" },
-    { civilian: "Ciúmes", impostor: "Desconfiança" },
-    { civilian: "Clima Pesado", impostor: "Silencio Estranho" }
   ]
 };
 
