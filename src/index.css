@@ -304,8 +304,45 @@ button.hub-game-card:hover {
   font-size: 0.75rem;
 }
 
+.hub-card-action {
+  background: transparent;
+  cursor: pointer;
+}
+
 .hub-game-card.is-locked {
   opacity: 0.58;
+}
+
+.pact-art {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 74% 28%, rgba(242, 230, 200, 0.26), transparent 18%),
+    linear-gradient(135deg, rgba(255, 51, 51, 0.2), rgba(0, 0, 0, 0.6)),
+    #080509;
+}
+
+.pact-moon {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  width: 74px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f2e6c8;
+  box-shadow: 0 0 24px rgba(242, 230, 200, 0.35);
+}
+
+.pact-mark {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 51, 51, 0.42);
+  background: rgba(70, 0, 0, 0.3);
+  box-shadow: 0 0 14px rgba(255, 51, 51, 0.28);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 2.2rem;
+  padding: 0.5rem 0.8rem;
 }
 
 .hub-back-button {
@@ -339,6 +376,234 @@ button.hub-game-card:hover {
 
   .hub-game-card {
     min-height: 250px;
+  }
+}
+
+/* O PACTO DE SANGUE */
+.pact-container {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: terminalBoot 0.4s ease-out;
+}
+
+.pact-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 51, 51, 0.25);
+  border-radius: var(--radius-panel);
+  padding: clamp(1rem, 3vw, 1.35rem);
+  box-shadow: var(--shadow-terminal), inset 0 0 22px rgba(0, 0, 0, 0.8);
+}
+
+.pact-entry {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.pact-title {
+  border: 0;
+  padding: 0;
+  margin: 0.2rem 0;
+  text-align: left;
+  color: #fff;
+  font-size: clamp(2rem, 7vw, 4rem);
+  line-height: 0.95;
+  text-shadow: 0 0 12px rgba(255, 51, 51, 0.35);
+}
+
+.pact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 0.85rem;
+}
+
+.pact-form label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.pact-form input {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 159, 0, 0.25);
+  border-radius: var(--radius-tactical);
+  color: #fff;
+  font-family: var(--font-mono);
+  padding: 0.8rem;
+  outline: none;
+}
+
+.pact-room-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  border-bottom: 1px dashed rgba(255, 51, 51, 0.18);
+  padding-bottom: 0.7rem;
+}
+
+.pact-phase-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.pact-phase-strip span {
+  border: 1px solid rgba(255, 159, 0, 0.18);
+  background: rgba(255, 159, 0, 0.04);
+  border-radius: 4px;
+  color: var(--amber-orange);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.45rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pact-role-card,
+.pact-action-box,
+.pact-log,
+.pact-private-log,
+.pact-players,
+.pact-ending,
+.pact-lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 159, 0, 0.14);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.pact-role-card > span,
+.pact-log > span,
+.pact-private-log > span,
+.pact-ending > span {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pact-role-card strong {
+  color: var(--impostor-red);
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  text-shadow: 0 0 8px rgba(255, 51, 51, 0.28);
+  text-transform: uppercase;
+}
+
+.pact-action-box h2,
+.pact-ending h2 {
+  margin: 0;
+}
+
+.pact-action-box .glass-select {
+  width: 100%;
+}
+
+.pact-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.pact-vote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.pact-vote-button {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  padding: 0.7rem;
+  text-transform: uppercase;
+}
+
+.pact-vote-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pact-host-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.pact-log p,
+.pact-private-log p {
+  margin: 0;
+}
+
+.pact-players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.pact-player {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  padding: 0.65rem;
+}
+
+.pact-player small {
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.pact-player.is-dead {
+  opacity: 0.55;
+  border-color: rgba(255, 51, 51, 0.25);
+}
+
+.pact-ending h2 {
+  color: var(--amber-orange);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+@media (max-width: 680px) {
+  .pact-room-header,
+  .pact-host-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pact-room-header {
+    flex-direction: column;
+  }
+
+  .pact-phase-strip {
+    grid-template-columns: 1fr;
   }
 }
 

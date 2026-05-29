@@ -41,6 +41,7 @@ const io = new Server(httpServer, {
 //   }
 // }
 const rooms = new Map();
+const pactRooms = new Map();
 
 // Função auxiliar para gerar código de sala aleatório (4 letras maiúsculas)
 function generateRoomId() {
@@ -51,7 +52,7 @@ function generateRoomId() {
     for (let i = 0; i < 4; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-  } while (rooms.has(result)); // Garante que é único
+  } while (rooms.has(result) || pactRooms.has(result)); // Garante que e unico entre os jogos
   return result;
 }
 
@@ -403,6 +404,149 @@ io.on('connection', (socket) => {
     }
   });
 
+  // PACTO DE SANGUE: CRIAR SALA
+  socket.on('pact_create_room', ({ nickname }) => {
+    const name = nickname?.trim();
+    if (!name) return socket.emit('error_message', 'Apelido inválido.');
+
+    const roomId = generateRoomId();
+    const room = createPactRoom(roomId, socket.id, name);
+    pactRooms.set(roomId, room);
+    socket.join(roomId);
+
+    socket.emit('pact_room_created', roomId);
+    emitPactRoom(room);
+  });
+
+  // PACTO DE SANGUE: ENTRAR NA SALA
+  socket.on('pact_join_room', ({ roomId, nickname }) => {
+    const code = roomId?.toUpperCase().trim();
+    const name = nickname?.trim();
+    if (!code || !name) return socket.emit('error_message', 'Dados inválidos.');
+
+    const room = pactRooms.get(code);
+    if (!room) return socket.emit('error_message', 'Sala do Pacto não encontrada.');
+
+    const existing = room.players.find(p => p.nickname.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      if (existing.connected && existing.id !== socket.id) {
+        return socket.emit('error_message', 'Este apelido já está em uso nesta sala.');
+      }
+      existing.id = socket.id;
+      existing.connected = true;
+      socket.join(code);
+      emitPactRoom(room);
+      emitPactPrivate(room, existing);
+      return;
+    }
+
+    if (room.phase !== 'LOBBY') {
+      return socket.emit('error_message', 'O pacto já foi selado nesta sala.');
+    }
+
+    room.players.push({
+      id: socket.id,
+      nickname: name,
+      isHost: false,
+      isReady: false,
+      connected: true,
+      alive: true,
+      role: null,
+      canVote: true,
+      protectedNextNight: false
+    });
+    socket.join(code);
+    emitPactRoom(room);
+  });
+
+  socket.on('pact_toggle_ready', () => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player || room.phase !== 'LOBBY' || player.isHost) return;
+    player.isReady = !player.isReady;
+    emitPactRoom(room);
+  });
+
+  socket.on('pact_start_game', () => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.isHost || room.phase !== 'LOBBY') return;
+
+    const activePlayers = room.players.filter(p => p.connected);
+    if (activePlayers.length < 4) {
+      return socket.emit('error_message', 'O Pacto precisa de pelo menos 4 jogadores.');
+    }
+    if (!activePlayers.every(p => p.isHost || p.isReady)) {
+      return socket.emit('error_message', 'Todos precisam estar prontos.');
+    }
+
+    startPactGame(room);
+    emitPactRoom(room);
+    emitPactPrivateToAll(room);
+  });
+
+  socket.on('pact_night_action', (action) => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.alive || room.phase !== 'NIGHT') return;
+
+    const normalized = normalizePactAction(room, player, action);
+    if (!normalized) {
+      return socket.emit('pact_private_message', 'Sua mente falha ao tentar canalizar esse poder agora.');
+    }
+
+    room.actions[player.id] = normalized;
+    socket.emit('pact_private_message', 'Sua decisão foi selada na noite.');
+    emitPactRoom(room);
+  });
+
+  socket.on('pact_resolve_night', () => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.isHost || room.phase !== 'NIGHT') return;
+    resolvePactNight(room);
+    emitPactRoom(room);
+    emitPactPrivateToAll(room);
+  });
+
+  socket.on('pact_vote', ({ targetId }) => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.alive || room.phase !== 'DAY' || !player.canVote) return;
+
+    const target = room.players.find(p => p.id === targetId && p.alive);
+    if (!target) return;
+
+    const finalTargetId = player.selfVoteTrap ? player.id : target.id;
+    room.votes[player.id] = finalTargetId;
+    checkPactMajority(room);
+    emitPactRoom(room);
+    emitPactPrivateToAll(room);
+  });
+
+  socket.on('pact_end_day', () => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.isHost || room.phase !== 'DAY') return;
+    executePactTopVoted(room);
+    emitPactRoom(room);
+    emitPactPrivateToAll(room);
+  });
+
+  socket.on('pact_next_night', () => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.isHost || room.phase !== 'DAY') return;
+    startPactNight(room);
+    emitPactRoom(room);
+    emitPactPrivateToAll(room);
+  });
+
+  socket.on('pact_restart_lobby', () => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.isHost) return;
+    resetPactRoom(room);
+    emitPactRoom(room);
+    emitPactPrivateToAll(room);
+  });
+
+  socket.on('pact_leave_room', () => {
+    handlePactPlayerExit(socket);
+  });
+
   // 8. JOGADOR SAI DA SALA VOLUNTARIAMENTE
   socket.on('leave_room', () => {
     handlePlayerExit(socket);
@@ -412,8 +556,412 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Cliente desconectado: ${socket.id}`);
     handlePlayerExit(socket, true); // true indica desconexão involuntária
+    handlePactPlayerExit(socket, true);
   });
 });
+
+const PACT_ROLES = {
+  ABOMINATION: { name: 'A Abominação Costurada', faction: 'Lobisomens', team: 'wolf' },
+  ALPHA: { name: 'O Alfa Alfaçado', faction: 'Lobisomens', team: 'wolf' },
+  FLAGELLANT: { name: 'O Flagelante', faction: 'Vila', team: 'village' },
+  BUTCHER: { name: 'O Carniceiro Devoto', faction: 'Vila', team: 'village' },
+  SUCCUBUS: { name: 'O Súcubo do Confessionário', faction: 'Vila', team: 'village' },
+  COLLECTOR: { name: 'O Colecionador de Pecados', faction: 'Neutro', team: 'neutral' },
+  PARASITE: { name: 'O Parasita Sombrio', faction: 'Neutro', team: 'neutral' },
+  VILLAGER: { name: 'Aldeão Marcado', faction: 'Vila', team: 'village' }
+};
+
+function createPactRoom(roomId, hostId, nickname) {
+  return {
+    id: roomId,
+    phase: 'LOBBY',
+    hostId,
+    dayNumber: 0,
+    nightNumber: 0,
+    players: [{
+      id: hostId,
+      nickname,
+      isHost: true,
+      isReady: false,
+      connected: true,
+      alive: true,
+      role: null,
+      canVote: true,
+      protectedNextNight: false
+    }],
+    actions: {},
+    votes: {},
+    log: ['A vila de Dunwich ainda respira. Por enquanto.'],
+    lastNightDeaths: [],
+    nightDisabled: false,
+    winner: null
+  };
+}
+
+function getPactPublicRoomState(room) {
+  return {
+    id: room.id,
+    phase: room.phase,
+    serverTime: Date.now(),
+    dayNumber: room.dayNumber,
+    nightNumber: room.nightNumber,
+    players: room.players.map(p => ({
+      id: p.id,
+      nickname: p.nickname,
+      isHost: p.isHost,
+      isReady: p.isReady,
+      connected: p.connected,
+      alive: p.alive,
+      canVote: p.canVote,
+      revealedRole: !p.alive ? p.role?.name : null
+    })),
+    votes: room.votes,
+    log: room.log.slice(-8),
+    winner: room.winner,
+    actionsCount: Object.keys(room.actions).length,
+    aliveCount: room.players.filter(p => p.alive).length
+  };
+}
+
+function emitPactRoom(room) {
+  io.to(room.id).emit('pact_room_state', getPactPublicRoomState(room));
+}
+
+function emitPactPrivate(room, player) {
+  if (!player?.connected) return;
+  const collectorKnown = player.collectorKnown || [];
+  io.to(player.id).emit('pact_private_state', {
+    role: player.role,
+    alive: player.alive,
+    hostId: player.parasiteHostId || null,
+    hostNickname: room.players.find(p => p.id === player.parasiteHostId)?.nickname || null,
+    privateLog: (player.privateLog || []).slice(-8),
+    collectorKnown
+  });
+}
+
+function emitPactPrivateToAll(room) {
+  room.players.forEach(player => emitPactPrivate(room, player));
+}
+
+function startPactGame(room) {
+  const activePlayers = shuffle([...room.players.filter(p => p.connected)]);
+  const roles = buildPactRoleList(activePlayers.length);
+
+  activePlayers.forEach((player, index) => {
+    player.role = roles[index] || PACT_ROLES.VILLAGER;
+    player.alive = true;
+    player.canVote = true;
+    player.protectedNextNight = false;
+    player.selfVoteTrap = false;
+    player.collectorKnown = [];
+    player.privateLog = [`Sua classe é ${player.role.name}. Facção: ${player.role.faction}.`];
+  });
+
+  const parasite = activePlayers.find(p => p.role.name === PACT_ROLES.PARASITE.name);
+  if (parasite) {
+    const hosts = activePlayers.filter(p => p.id !== parasite.id);
+    const host = hosts[Math.floor(Math.random() * hosts.length)];
+    parasite.parasiteHostId = host?.id || null;
+    parasite.privateLog.push(`Você infestou ${host?.nickname}. Se a vila enforcar seu hospedeiro, você vence sozinho.`);
+  }
+
+  room.phase = 'NIGHT';
+  room.nightNumber = 1;
+  room.dayNumber = 0;
+  room.actions = {};
+  room.votes = {};
+  room.winner = null;
+  room.log = [
+    'A névoa desce sobre Dunwich, trazendo cheiro de ferro e madeira úmida.',
+    'A Noite Caiu. Recolham-se aos seus pecados.'
+  ];
+}
+
+function buildPactRoleList(count) {
+  const roles = [PACT_ROLES.ALPHA, PACT_ROLES.FLAGELLANT, PACT_ROLES.BUTCHER, PACT_ROLES.SUCCUBUS];
+  if (count >= 5) roles.push(PACT_ROLES.ABOMINATION);
+  if (count >= 6) roles.push(PACT_ROLES.COLLECTOR);
+  if (count >= 7) roles.push(PACT_ROLES.PARASITE);
+  while (roles.length < count) roles.push(PACT_ROLES.VILLAGER);
+  return shuffle(roles);
+}
+
+function normalizePactAction(room, player, action = {}) {
+  const roleName = player.role?.name;
+  const target = room.players.find(p => p.id === action.targetId);
+  const secondTarget = room.players.find(p => p.id === action.secondTargetId);
+  const livingTarget = target?.alive ? target : null;
+
+  if (room.nightDisabled) return { type: 'blocked' };
+  if ([PACT_ROLES.ALPHA.name, PACT_ROLES.ABOMINATION.name].includes(roleName)) {
+    if (!livingTarget || livingTarget.id === player.id) return null;
+    return {
+      type: 'wolf_kill',
+      targetId: livingTarget.id,
+      howl: roleName === PACT_ROLES.ALPHA.name && action.howl === true && !player.alphaHowlUsed
+    };
+  }
+  if (roleName === PACT_ROLES.FLAGELLANT.name) {
+    if (!livingTarget) return null;
+    return { type: 'flagellant_vision', targetId: livingTarget.id };
+  }
+  if (roleName === PACT_ROLES.BUTCHER.name) {
+    if (!target || target.alive) return null;
+    return { type: 'butcher_feed', targetId: target.id };
+  }
+  if (roleName === PACT_ROLES.SUCCUBUS.name) {
+    if (!livingTarget || !secondTarget?.alive || livingTarget.id === secondTarget.id) return null;
+    return { type: 'succubus_link', targetId: livingTarget.id, secondTargetId: secondTarget.id };
+  }
+  if (roleName === PACT_ROLES.COLLECTOR.name) {
+    if (!target) return null;
+    return { type: 'collector_read', targetId: target.id };
+  }
+  return { type: 'wait' };
+}
+
+function resolvePactNight(room) {
+  const deaths = [];
+  const dawn = [];
+
+  if (room.nightDisabled) {
+    room.nightDisabled = false;
+    room.phase = 'DAY';
+    room.dayNumber += 1;
+    room.actions = {};
+    room.votes = {};
+    room.log.push('A culpa coletiva sufocou Dunwich. Nenhum poder respondeu durante a noite.');
+    return;
+  }
+
+  for (const [playerId, action] of Object.entries(room.actions)) {
+    const actor = room.players.find(p => p.id === playerId && p.alive);
+    const target = room.players.find(p => p.id === action.targetId);
+    const secondTarget = room.players.find(p => p.id === action.secondTargetId);
+    if (!actor || !target) continue;
+
+    if (action.type === 'flagellant_vision') {
+      actor.privateLog.push(`Visão de Sangue: ${target.nickname} pertence à facção ${target.role.faction}.`);
+    }
+    if (action.type === 'collector_read') {
+      actor.collectorKnown = actor.collectorKnown || [];
+      if (!actor.collectorKnown.some(entry => entry.id === target.id)) {
+        actor.collectorKnown.push({ id: target.id, nickname: target.nickname, role: target.role.name });
+      }
+      actor.privateLog.push(`Pecado absorvido: ${target.nickname} é ${target.role.name}.`);
+    }
+    if (action.type === 'butcher_feed') {
+      if (target.role.team === 'wolf') {
+        actor.protectedNextNight = true;
+        actor.privateLog.push('A carne de lobo te reveste de uma resistência profana para a próxima noite.');
+      } else {
+        actor.canVote = false;
+        actor.privateLog.push('A carne inocente te deixou em choque. Amanhã, sua voz falhará no julgamento.');
+      }
+    }
+    if (action.type === 'succubus_link' && secondTarget) {
+      const pair = [target, secondTarget];
+      const wolf = pair.find(p => p.role.team === 'wolf');
+      const villager = pair.find(p => p.role.team === 'village');
+      if (wolf && villager) {
+        wolf.canVote = false;
+        actor.privateLog.push(`Chantagem firmada: ${wolf.nickname} perderá o voto se ${villager.nickname} cair.`);
+      }
+    }
+    if (action.howl && target.alive) {
+      target.selfVoteTrap = true;
+      actor.alphaHowlUsed = true;
+      actor.privateLog.push(`O Uivo da Demência foi cravado em ${target.nickname}.`);
+    }
+  }
+
+  const wolfActions = Object.entries(room.actions)
+    .map(([playerId, action]) => ({ actor: room.players.find(p => p.id === playerId), action }))
+    .filter(({ actor, action }) => actor?.alive && actor.role.team === 'wolf' && action.type === 'wolf_kill');
+
+  const killAction = wolfActions[0]?.action;
+  const target = room.players.find(p => p.id === killAction?.targetId && p.alive);
+  if (target) {
+    if (target.protectedNextNight) {
+      target.protectedNextNight = false;
+      dawn.push(`${target.nickname} foi encontrado vivo, pálido, protegido por algo que ninguém ousa nomear.`);
+    } else {
+      target.alive = false;
+      deaths.push(target);
+      dawn.push(`${target.nickname} não viu o amanhecer. A vila encontrou apenas silêncio e marcas na porta.`);
+    }
+  } else {
+    dawn.push('A noite arranhou as paredes, mas ninguém caiu.');
+  }
+
+  handleParasiteNightDeaths(room, deaths);
+  room.lastNightDeaths = deaths.map(p => p.id);
+  room.phase = 'DAY';
+  room.dayNumber += 1;
+  room.actions = {};
+  room.votes = {};
+  room.log.push(`Amanhecer ${room.dayNumber}.`, ...dawn);
+  checkPactWin(room);
+}
+
+function checkPactMajority(room) {
+  const eligible = room.players.filter(p => p.alive && p.canVote);
+  const needed = Math.floor(eligible.length / 2) + 1;
+  const counts = countVotes(room);
+  const majority = Object.entries(counts).find(([, count]) => count >= needed);
+  if (majority) executePactPlayer(room, majority[0]);
+}
+
+function executePactTopVoted(room) {
+  const counts = countVotes(room);
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (!top) {
+    room.log.push('O dia morreu sem consenso. A forca permaneceu vazia.');
+    return checkPactWin(room);
+  }
+  executePactPlayer(room, top[0]);
+}
+
+function countVotes(room) {
+  return Object.values(room.votes).reduce((acc, targetId) => {
+    acc[targetId] = (acc[targetId] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function executePactPlayer(room, targetId) {
+  const target = room.players.find(p => p.id === targetId && p.alive);
+  if (!target) return;
+  target.alive = false;
+  room.votes = {};
+  room.log.push(`${target.nickname} foi levado ao julgamento. A corda revelou: ${target.role.name}.`);
+  if (target.role.name === PACT_ROLES.FLAGELLANT.name) {
+    room.nightDisabled = true;
+    room.log.push('A culpa do Flagelante caiu sobre todos. A próxima noite não terá habilidades.');
+  }
+  const parasite = room.players.find(p => p.alive && p.role?.name === PACT_ROLES.PARASITE.name);
+  if (parasite?.parasiteHostId === target.id) {
+    room.phase = 'ENDED';
+    room.winner = { faction: 'O Parasita Sombrio', text: `${parasite.nickname} venceu sozinho. A vila enforcou seu hospedeiro.` };
+    return;
+  }
+  checkPactWin(room);
+}
+
+function handleParasiteNightDeaths(room, deaths) {
+  const parasite = room.players.find(p => p.alive && p.role?.name === PACT_ROLES.PARASITE.name);
+  if (parasite && deaths.some(dead => dead.id === parasite.parasiteHostId)) {
+    parasite.alive = false;
+    room.log.push(`${parasite.nickname} se apagou junto do hospedeiro devorado.`);
+  }
+}
+
+function checkPactWin(room) {
+  if (room.phase === 'ENDED') return;
+  const alive = room.players.filter(p => p.alive);
+  const wolves = alive.filter(p => p.role?.team === 'wolf');
+  const villagers = alive.filter(p => p.role?.team === 'village');
+  const collector = alive.find(p => p.role?.name === PACT_ROLES.COLLECTOR.name);
+
+  if (collector) {
+    const deadKnown = (collector.collectorKnown || []).filter(entry => {
+      const player = room.players.find(p => p.id === entry.id);
+      return player && !player.alive;
+    });
+    if (deadKnown.length >= 3) {
+      room.phase = 'ENDED';
+      room.winner = { faction: 'O Colecionador de Pecados', text: `${collector.nickname} roubou a vitória com três pecados de mortos.` };
+      return;
+    }
+  }
+  if (wolves.length === 0) {
+    room.phase = 'ENDED';
+    room.winner = { faction: 'Vila', text: 'Os sobreviventes eliminaram as ameaças de Dunwich.' };
+    return;
+  }
+  if (wolves.length >= villagers.length) {
+    room.phase = 'ENDED';
+    room.winner = { faction: 'Lobisomens', text: 'A matilha igualou a vila. Dunwich pertence aos predadores.' };
+  }
+}
+
+function startPactNight(room) {
+  room.phase = 'NIGHT';
+  room.nightNumber += 1;
+  room.actions = {};
+  room.votes = {};
+  room.players.forEach(p => {
+    p.selfVoteTrap = false;
+    if (p.alive) p.canVote = true;
+  });
+  room.log.push(`Noite ${room.nightNumber}. A vila recolhe as luzes e expõe as próprias culpas.`);
+}
+
+function resetPactRoom(room) {
+  room.phase = 'LOBBY';
+  room.dayNumber = 0;
+  room.nightNumber = 0;
+  room.actions = {};
+  room.votes = {};
+  room.winner = null;
+  room.lastNightDeaths = [];
+  room.nightDisabled = false;
+  room.log = ['A vila de Dunwich ainda respira. Por enquanto.'];
+  room.players = room.players.filter(p => p.connected).map((p, index) => ({
+    id: p.id,
+    nickname: p.nickname,
+    isHost: index === 0,
+    isReady: false,
+    connected: true,
+    alive: true,
+    role: null,
+    canVote: true,
+    protectedNextNight: false
+  }));
+  room.hostId = room.players[0]?.id;
+}
+
+function handlePactPlayerExit(socket, isDisconnect = false) {
+  const { room, player } = getPactRoomAndPlayer(socket.id);
+  if (!room || !player) return;
+
+  if (isDisconnect && room.phase !== 'LOBBY') {
+    player.connected = false;
+    emitPactRoom(room);
+    return;
+  }
+
+  room.players = room.players.filter(p => p.id !== socket.id);
+  socket.leave(room.id);
+  if (room.players.length === 0) {
+    pactRooms.delete(room.id);
+    return;
+  }
+  if (player.isHost) {
+    const nextHost = room.players.find(p => p.connected) || room.players[0];
+    if (nextHost) {
+      room.players.forEach(p => { p.isHost = p.id === nextHost.id; });
+      room.hostId = nextHost.id;
+    }
+  }
+  emitPactRoom(room);
+}
+
+function getPactRoomAndPlayer(socketId) {
+  for (const room of pactRooms.values()) {
+    const player = room.players.find(p => p.id === socketId);
+    if (player) return { room, player };
+  }
+  return { room: null, player: null };
+}
+
+function shuffle(list) {
+  return list
+    .map(value => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
 
 // Reseta a sala de volta ao Lobby
 function resetRoomToLobby(room) {

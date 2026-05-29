@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import PactGame from './PactGame.jsx';
 
 // Conecta ao servidor Express (porta 3000 em dev, mesma porta em produção)
 const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin;
@@ -355,16 +356,19 @@ export default function App() {
             <span className="hub-play-cta">JOGAR AGORA</span>
           </button>
 
-          <div className="hub-game-card is-locked">
-            <span className="hub-game-status">EM BREVE</span>
-            <span className="hub-game-art hub-game-placeholder" aria-hidden="true">
-              <span>?</span>
+          <div className="hub-game-card is-available">
+            <span className="hub-game-status">NOVO</span>
+            <span className="hub-game-art pact-art" aria-hidden="true">
+              <span className="pact-moon"></span>
+              <span className="pact-mark">PB</span>
             </span>
-            <span className="hub-game-title">Próximo Jogo</span>
+            <span className="hub-game-title">O Pacto de Sangue</span>
             <span className="hub-game-copy">
-              Um novo modo da Atlética vai aparecer aqui.
+              Lobisomem sombrio com noite, voto e papéis secretos.
             </span>
-            <span className="hub-play-cta">AGUARDANDO</span>
+            <button className="hub-play-cta hub-card-action" onClick={() => setSelectedGame('pact')}>
+              JOGAR AGORA
+            </button>
           </div>
         </section>
 
@@ -373,6 +377,10 @@ export default function App() {
         </footer>
       </div>
     );
+  }
+
+  if (selectedGame === 'pact') {
+    return <PactGame socket={socket} onBack={() => setSelectedGame(null)} />;
   }
 
   // Renderização condicional por tela
