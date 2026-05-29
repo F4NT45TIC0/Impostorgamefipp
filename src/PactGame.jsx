@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 const ROLE_HELP = {
   'O Alfa Alfaçado': 'Lobisomem. Pode atacar e usar Uivo da Demência uma vez para sabotar o voto de alguém.',
   'A Abominação Costurada': 'Lobisomem. Participa do ataque da matilha.',
-  'O Flagelante': 'Vila. Investiga a facção de um jogador durante a noite.',
-  'O Carniceiro Devoto': 'Vila. Pode consumir um morto: lobo dá proteção, aldeão tira seu voto.',
-  'O Súcubo do Confessionário': 'Vila. Liga dois vivos; se forem lobo e aldeão, o lobo perde o voto.',
+  'O Flagelante': 'Vila de Teodoro Sampaio. Investiga a facção de um jogador durante a noite.',
+  'O Carniceiro Devoto': 'Vila de Teodoro Sampaio. Pode consumir um morto: lobo dá proteção, aldeão tira seu voto.',
+  'O Súcubo do Confessionário': 'Vila de Teodoro Sampaio. Liga dois vivos; se forem lobo e aldeão, o lobo perde o voto.',
   'O Colecionador de Pecados': 'Neutro. Descobre classes. Vence sozinho se conhecer 3 mortos.',
-  'O Parasita Sombrio': 'Neutro. Vence se seu hospedeiro for enforcado pela vila.',
-  'Aldeão Marcado': 'Vila. Sobreviva, discuta e vote para eliminar os lobisomens.'
+  'O Parasita Sombrio': 'Neutro. Vence se seu hospedeiro for enforcado pela Vila de Teodoro Sampaio.',
+  'Aldeão Marcado': 'Vila de Teodoro Sampaio. Sobreviva, discuta e vote para eliminar os lobisomens.'
 };
 
 export default function PactGame({ socket, onBack }) {
@@ -112,7 +112,7 @@ export default function PactGame({ socket, onBack }) {
           <span className="hub-kicker">LOBISOMEM // HORROR SOCIAL</span>
           <h1 className="pact-title">O PACTO DE SANGUE</h1>
           <p>
-            Dunwich fechou os portões. Crie uma sala, distribua papéis secretos e sobreviva ao ciclo de noite e julgamento.
+            A Vila de Teodoro Sampaio fechou os portões. Crie uma sala, distribua papéis secretos e sobreviva ao ciclo de noite e julgamento.
           </p>
 
           <form onSubmit={createRoom} className="pact-form">
@@ -327,7 +327,7 @@ function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket }) {
 function LogPanel({ log }) {
   return (
     <section className="pact-log">
-      <span>Crônica de Dunwich</span>
+      <span>Crônica de Teodoro Sampaio</span>
       {log.map((entry, index) => <p key={`${entry}-${index}`}>{entry}</p>)}
     </section>
   );

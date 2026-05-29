@@ -563,12 +563,12 @@ io.on('connection', (socket) => {
 const PACT_ROLES = {
   ABOMINATION: { name: 'A Abominação Costurada', faction: 'Lobisomens', team: 'wolf' },
   ALPHA: { name: 'O Alfa Alfaçado', faction: 'Lobisomens', team: 'wolf' },
-  FLAGELLANT: { name: 'O Flagelante', faction: 'Vila', team: 'village' },
-  BUTCHER: { name: 'O Carniceiro Devoto', faction: 'Vila', team: 'village' },
-  SUCCUBUS: { name: 'O Súcubo do Confessionário', faction: 'Vila', team: 'village' },
+  FLAGELLANT: { name: 'O Flagelante', faction: 'Vila de Teodoro Sampaio', team: 'village' },
+  BUTCHER: { name: 'O Carniceiro Devoto', faction: 'Vila de Teodoro Sampaio', team: 'village' },
+  SUCCUBUS: { name: 'O Súcubo do Confessionário', faction: 'Vila de Teodoro Sampaio', team: 'village' },
   COLLECTOR: { name: 'O Colecionador de Pecados', faction: 'Neutro', team: 'neutral' },
   PARASITE: { name: 'O Parasita Sombrio', faction: 'Neutro', team: 'neutral' },
-  VILLAGER: { name: 'Aldeão Marcado', faction: 'Vila', team: 'village' }
+  VILLAGER: { name: 'Aldeão Marcado', faction: 'Vila de Teodoro Sampaio', team: 'village' }
 };
 
 function createPactRoom(roomId, hostId, nickname) {
@@ -591,7 +591,7 @@ function createPactRoom(roomId, hostId, nickname) {
     }],
     actions: {},
     votes: {},
-    log: ['A vila de Dunwich ainda respira. Por enquanto.'],
+    log: ['A Vila de Teodoro Sampaio ainda respira. Por enquanto.'],
     lastNightDeaths: [],
     nightDisabled: false,
     winner: null
@@ -663,7 +663,7 @@ function startPactGame(room) {
     const hosts = activePlayers.filter(p => p.id !== parasite.id);
     const host = hosts[Math.floor(Math.random() * hosts.length)];
     parasite.parasiteHostId = host?.id || null;
-    parasite.privateLog.push(`Você infestou ${host?.nickname}. Se a vila enforcar seu hospedeiro, você vence sozinho.`);
+    parasite.privateLog.push(`Você infestou ${host?.nickname}. Se a Vila de Teodoro Sampaio enforcar seu hospedeiro, você vence sozinho.`);
   }
 
   room.phase = 'NIGHT';
@@ -673,7 +673,7 @@ function startPactGame(room) {
   room.votes = {};
   room.winner = null;
   room.log = [
-    'A névoa desce sobre Dunwich, trazendo cheiro de ferro e madeira úmida.',
+    'A névoa desce sobre a Vila de Teodoro Sampaio, trazendo cheiro de ferro e madeira úmida.',
     'A Noite Caiu. Recolham-se aos seus pecados.'
   ];
 }
@@ -731,7 +731,7 @@ function resolvePactNight(room) {
     room.dayNumber += 1;
     room.actions = {};
     room.votes = {};
-    room.log.push('A culpa coletiva sufocou Dunwich. Nenhum poder respondeu durante a noite.');
+    room.log.push('A culpa coletiva sufocou a Vila de Teodoro Sampaio. Nenhum poder respondeu durante a noite.');
     return;
   }
 
@@ -789,7 +789,7 @@ function resolvePactNight(room) {
     } else {
       target.alive = false;
       deaths.push(target);
-      dawn.push(`${target.nickname} não viu o amanhecer. A vila encontrou apenas silêncio e marcas na porta.`);
+      dawn.push(`${target.nickname} não viu o amanhecer. A Vila de Teodoro Sampaio encontrou apenas silêncio e marcas na porta.`);
     }
   } else {
     dawn.push('A noite arranhou as paredes, mas ninguém caiu.');
@@ -843,7 +843,7 @@ function executePactPlayer(room, targetId) {
   const parasite = room.players.find(p => p.alive && p.role?.name === PACT_ROLES.PARASITE.name);
   if (parasite?.parasiteHostId === target.id) {
     room.phase = 'ENDED';
-    room.winner = { faction: 'O Parasita Sombrio', text: `${parasite.nickname} venceu sozinho. A vila enforcou seu hospedeiro.` };
+    room.winner = { faction: 'O Parasita Sombrio', text: `${parasite.nickname} venceu sozinho. A Vila de Teodoro Sampaio enforcou seu hospedeiro.` };
     return;
   }
   checkPactWin(room);
@@ -877,12 +877,12 @@ function checkPactWin(room) {
   }
   if (wolves.length === 0) {
     room.phase = 'ENDED';
-    room.winner = { faction: 'Vila', text: 'Os sobreviventes eliminaram as ameaças de Dunwich.' };
+    room.winner = { faction: 'Vila de Teodoro Sampaio', text: 'Os sobreviventes eliminaram as ameaças da Vila de Teodoro Sampaio.' };
     return;
   }
   if (wolves.length >= villagers.length) {
     room.phase = 'ENDED';
-    room.winner = { faction: 'Lobisomens', text: 'A matilha igualou a vila. Dunwich pertence aos predadores.' };
+    room.winner = { faction: 'Lobisomens', text: 'A matilha igualou a Vila de Teodoro Sampaio. Teodoro pertence aos predadores.' };
   }
 }
 
@@ -895,7 +895,7 @@ function startPactNight(room) {
     p.selfVoteTrap = false;
     if (p.alive) p.canVote = true;
   });
-  room.log.push(`Noite ${room.nightNumber}. A vila recolhe as luzes e expõe as próprias culpas.`);
+  room.log.push(`Noite ${room.nightNumber}. A Vila de Teodoro Sampaio recolhe as luzes e expõe as próprias culpas.`);
 }
 
 function resetPactRoom(room) {
@@ -907,7 +907,7 @@ function resetPactRoom(room) {
   room.winner = null;
   room.lastNightDeaths = [];
   room.nightDisabled = false;
-  room.log = ['A vila de Dunwich ainda respira. Por enquanto.'];
+  room.log = ['A Vila de Teodoro Sampaio ainda respira. Por enquanto.'];
   room.players = room.players.filter(p => p.connected).map((p, index) => ({
     id: p.id,
     nickname: p.nickname,
