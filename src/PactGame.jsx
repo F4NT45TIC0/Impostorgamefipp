@@ -1,15 +1,82 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const ROLE_HELP = {
-  'O Alfa Alfaçado': 'Lobisomem. Pode atacar e usar Uivo da Demência uma vez para sabotar o voto de alguém.',
-  'A Abominação Costurada': 'Lobisomem. Participa do ataque da matilha.',
-  'O Flagelante': 'Vila de Teodoro Sampaio. Investiga a facção de um jogador durante a noite.',
-  'O Carniceiro Devoto': 'Vila de Teodoro Sampaio. Pode consumir um morto: lobo dá proteção, aldeão tira seu voto.',
-  'O Súcubo do Confessionário': 'Vila de Teodoro Sampaio. Liga dois vivos; se forem lobo e aldeão, o lobo perde o voto.',
-  'O Colecionador de Pecados': 'Neutro. Descobre classes. Vence sozinho se conhecer 3 mortos.',
-  'O Parasita Sombrio': 'Neutro. Vence se seu hospedeiro for enforcado pela Vila de Teodoro Sampaio.',
-  'Aldeão Marcado': 'Vila de Teodoro Sampaio. Sobreviva, discuta e vote para eliminar os lobisomens.'
+const ROLE_GUIDE = {
+  'O Alfa Alfaçado': {
+    side: 'Lobisomens',
+    goal: 'Vencer quando os lobisomens ficarem em número igual ou maior que a Vila de Teodoro Sampaio.',
+    night: 'Toda noite pode escolher uma pessoa viva para ser o ataque da matilha.',
+    extra: 'Uma vez por partida pode marcar "Uivo da Demência". A pessoa escolhida votará contra si mesma no próximo dia, mesmo achando que votou em outra pessoa.',
+    tip: 'Combine com outros lobisomens fora da tela, mas envie apenas um alvo confiável para a noite não ficar perdida.'
+  },
+  'A Abominação Costurada': {
+    side: 'Lobisomens',
+    goal: 'Ajudar a matilha a igualar ou superar o número de aldeões vivos.',
+    night: 'Escolhe uma pessoa viva para atacar durante a noite. Se houver mais de um lobisomem, o primeiro ataque registrado será usado.',
+    extra: 'Nesta versão rápida, ela funciona como o segundo lobisomem forte da matilha.',
+    tip: 'Use a discussão do dia para parecer útil para a vila, não para defender lobisomem de forma óbvia.'
+  },
+  'Lobisomem da Matilha': {
+    side: 'Lobisomens',
+    goal: 'Ajudar a matilha a dominar a Vila de Teodoro Sampaio.',
+    night: 'Escolhe uma pessoa viva para atacar. O ataque da matilha é resolvido em conjunto.',
+    extra: 'Não possui poder especial além do ataque, então seu poder real é blefar bem no dia.',
+    tip: 'Com 3 lobisomens, votem de forma coordenada, mas sem parecer um bloco automático.'
+  },
+  'O Flagelante': {
+    side: 'Vila de Teodoro Sampaio',
+    goal: 'Descobrir quem ameaça a vila e ajudar a eliminar todos os lobisomens.',
+    night: 'Escolhe uma pessoa viva e descobre a facção dela: Lobisomens, Vila de Teodoro Sampaio ou Neutro.',
+    extra: 'Se for enforcado durante o dia, a culpa coletiva bloqueia todas as habilidades da próxima noite.',
+    tip: 'Não entregue sua informação cedo demais. Tente puxar votos no alvo certo sem se expor de graça.'
+  },
+  'O Carniceiro Devoto': {
+    side: 'Vila de Teodoro Sampaio',
+    goal: 'Sobreviver e usar os mortos para entender o que aconteceu.',
+    night: 'Escolhe alguém que já morreu. Se era lobisomem, você fica protegido na próxima noite. Se era aldeão, você fica abalado e perde o voto no dia seguinte.',
+    extra: 'Ele é mais útil depois que a primeira morte acontece. Na primeira noite pode apenas aguardar.',
+    tip: 'Olhe a lista de mortos antes de agir. Escolher qualquer morto sem pensar pode te tirar o voto no pior momento.'
+  },
+  'O Súcubo do Confessionário': {
+    side: 'Vila de Teodoro Sampaio',
+    goal: 'Usar chantagem para enfraquecer os lobisomens sem revelar tudo no chat.',
+    night: 'Escolhe duas pessoas vivas. Se uma for lobisomem e a outra for da vila, o lobisomem perde o voto.',
+    extra: 'Se as duas pessoas forem da mesma facção, nada acontece.',
+    tip: 'Escolha pares que estão se defendendo demais ou que parecem estar combinando discurso.'
+  },
+  'O Colecionador de Pecados': {
+    side: 'Neutro',
+    goal: 'Vencer sozinho se sobreviver e conhecer a classe exata de pelo menos 3 jogadores mortos.',
+    night: 'Escolhe qualquer jogador e descobre a classe exata dele.',
+    extra: 'Você não joga pela vila nem pelos lobisomens. Sua vitória rouba a vitória dos outros.',
+    tip: 'Investigue pessoas que podem morrer logo. Informação sobre morto vale muito mais para sua condição de vitória.'
+  },
+  'O Parasita Sombrio': {
+    side: 'Neutro',
+    goal: 'Vencer sozinho se seu hospedeiro secreto for enforcado pela Vila de Teodoro Sampaio.',
+    night: 'Não escolhe ação. No início da partida o sistema sorteia um hospedeiro para você.',
+    extra: 'Se seu hospedeiro morrer atacado à noite, você morre junto. Se ele sobreviver até o fim, você perde.',
+    tip: 'Tente fazer seu hospedeiro parecer suspeito o bastante para ser votado, mas não tão suspeito a ponto de ser atacado à noite.'
+  },
+  'Aldeão Marcado': {
+    side: 'Vila de Teodoro Sampaio',
+    goal: 'Eliminar todos os lobisomens e impedir que neutros roubem a partida.',
+    night: 'Não possui ação noturna. Use o botão de aguardar para confirmar que está vivo.',
+    extra: 'Seu poder é votar, discutir e perceber contradições.',
+    tip: 'Faça perguntas objetivas: em quem a pessoa confia, em quem votaria, e por quê.'
+  }
 };
+
+const ROLE_ORDER = [
+  'O Alfa Alfaçado',
+  'A Abominação Costurada',
+  'Lobisomem da Matilha',
+  'O Flagelante',
+  'O Carniceiro Devoto',
+  'O Súcubo do Confessionário',
+  'O Colecionador de Pecados',
+  'O Parasita Sombrio',
+  'Aldeão Marcado'
+];
 
 export default function PactGame({ socket, onBack }) {
   const [nickname, setNickname] = useState(() => localStorage.getItem('pact_nickname') || '');
@@ -33,7 +100,7 @@ export default function PactGame({ socket, onBack }) {
     const handlePrivate = (state) => setPrivateState(state);
     const handleMessage = (msg) => {
       setMessage(msg);
-      setTimeout(() => setMessage((current) => current === msg ? null : current), 3000);
+      setTimeout(() => setMessage((current) => current === msg ? null : current), 3500);
     };
 
     socket.on('pact_room_created', handleCreated);
@@ -51,17 +118,47 @@ export default function PactGame({ socket, onBack }) {
     };
   }, [socket]);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const syncRoom = () => {
+      if (roomId && nickname.trim()) {
+        socket.emit('pact_sync_room', { roomId, nickname });
+      }
+    };
+
+    socket.on('connect', syncRoom);
+    document.addEventListener('visibilitychange', syncRoom);
+    window.addEventListener('focus', syncRoom);
+    window.addEventListener('pageshow', syncRoom);
+
+    return () => {
+      socket.off('connect', syncRoom);
+      document.removeEventListener('visibilitychange', syncRoom);
+      window.removeEventListener('focus', syncRoom);
+      window.removeEventListener('pageshow', syncRoom);
+    };
+  }, [socket, roomId, nickname]);
+
+  useEffect(() => {
+    setTargetId('');
+    setSecondTargetId('');
+    setHowl(false);
+  }, [roomState?.phase, roleNameFromState(privateState)]);
+
   const me = useMemo(
     () => roomState?.players.find(player => player.id === socket?.id),
     [roomState, socket?.id]
   );
   const isHost = Boolean(me?.isHost);
+  const connectedPlayers = roomState?.players.filter(player => player.connected) || [];
   const alivePlayers = roomState?.players.filter(player => player.alive) || [];
   const deadPlayers = roomState?.players.filter(player => !player.alive) || [];
   const roleName = privateState?.role?.name;
   const livingTargets = alivePlayers.filter(player => player.id !== socket?.id);
   const anyTargets = roomState?.players.filter(player => player.id !== socket?.id) || [];
   const deadTargets = deadPlayers;
+  const settings = roomState?.settings || { wolfCount: 1, specialRoles: true };
 
   const handleNicknameChange = (value) => {
     setNickname(value);
@@ -99,6 +196,10 @@ export default function PactGame({ socket, onBack }) {
     socket?.emit('pact_vote', { targetId: id });
   };
 
+  const updateSettings = (patch) => {
+    socket?.emit('pact_update_settings', patch);
+  };
+
   const voteCounts = Object.values(roomState?.votes || {}).reduce((acc, id) => {
     acc[id] = (acc[id] || 0) + 1;
     return acc;
@@ -112,20 +213,22 @@ export default function PactGame({ socket, onBack }) {
           <span className="hub-kicker">LOBISOMEM // HORROR SOCIAL</span>
           <h1 className="pact-title">O PACTO DE SANGUE</h1>
           <p>
-            A Vila de Teodoro Sampaio fechou os portões. Crie uma sala, distribua papéis secretos e sobreviva ao ciclo de noite e julgamento.
+            A Vila de Teodoro Sampaio fechou os portões. Crie uma sala, escolha a quantidade de lobisomens e jogue com até 20 pessoas.
           </p>
 
           <form onSubmit={createRoom} className="pact-form">
             <label>Apelido</label>
-            <input value={nickname} onChange={(event) => handleNicknameChange(event.target.value)} maxLength={15} required />
+            <input value={nickname} onChange={(event) => handleNicknameChange(event.target.value)} maxLength={15} required autoComplete="nickname" />
             <button className="btn btn-primary" type="submit">CRIAR PACTO</button>
           </form>
 
           <form onSubmit={joinRoom} className="pact-form">
             <label>Código da sala</label>
-            <input value={inputRoomId} onChange={(event) => setInputRoomId(event.target.value.toUpperCase())} maxLength={4} />
+            <input value={inputRoomId} onChange={(event) => setInputRoomId(event.target.value.toUpperCase())} maxLength={4} autoCapitalize="characters" />
             <button className="btn btn-secondary" type="submit">ENTRAR NO PACTO</button>
           </form>
+
+          <RoleGuide />
         </section>
       </div>
     );
@@ -147,20 +250,22 @@ export default function PactGame({ socket, onBack }) {
         <div className="pact-phase-strip">
           <span>{phaseLabel(roomState.phase)}</span>
           <span>{alivePlayers.length} vivos</span>
-          <span>Noite {roomState.nightNumber} / Dia {roomState.dayNumber}</span>
+          <span>{connectedPlayers.length}/20 conectados</span>
         </div>
 
         {roomState.phase === 'LOBBY' && (
-          <LobbyView roomState={roomState} isHost={isHost} socket={socket} />
+          <LobbyView
+            roomState={roomState}
+            isHost={isHost}
+            socket={socket}
+            settings={settings}
+            updateSettings={updateSettings}
+            connectedPlayers={connectedPlayers}
+          />
         )}
 
         {roomState.phase !== 'LOBBY' && privateState?.role && (
-          <section className="pact-role-card">
-            <span>Sua classe</span>
-            <strong>{privateState.role.name}</strong>
-            <p>{ROLE_HELP[privateState.role.name] || `Facção: ${privateState.role.faction}`}</p>
-            {privateState.hostNickname && <p>Hospedeiro: {privateState.hostNickname}</p>}
-          </section>
+          <RoleCard roleName={privateState.role.name} hostNickname={privateState.hostNickname} />
         )}
 
         {roomState.phase === 'NIGHT' && (
@@ -208,6 +313,8 @@ export default function PactGame({ socket, onBack }) {
         <LogPanel log={roomState.log} />
         <PlayersPanel players={roomState.players} voteCounts={voteCounts} />
 
+        {roomState.phase !== 'LOBBY' && <RoleGuide compact />}
+
         {privateState?.privateLog?.length > 0 && (
           <section className="pact-private-log">
             <span>Mensagens privadas</span>
@@ -219,20 +326,90 @@ export default function PactGame({ socket, onBack }) {
   );
 }
 
-function LobbyView({ roomState, isHost, socket }) {
+function LobbyView({ roomState, isHost, socket, settings, updateSettings, connectedPlayers }) {
   const ready = roomState.players.every(player => player.isHost || player.isReady);
+  const minimumPlayers = getMinimumPlayers(settings.wolfCount);
+  const canStart = connectedPlayers.length >= minimumPlayers && ready;
+
   return (
-    <section className="pact-lobby-actions">
-      <p>Reúna pelo menos 4 jogadores. Quando todos estiverem prontos, o host sela o pacto.</p>
-      {isHost ? (
-        <button className="btn btn-primary" disabled={roomState.players.length < 4 || !ready} onClick={() => socket?.emit('pact_start_game')}>
-          SELAR O PACTO
-        </button>
-      ) : (
-        <button className="btn btn-secondary" onClick={() => socket?.emit('pact_toggle_ready')}>
-          ALTERAR PRONTO
-        </button>
-      )}
+    <>
+      <section className="pact-lobby-actions">
+        <div>
+          <span className="pact-section-label">Preparação da partida</span>
+          <p>
+            O host escolhe de 1 a 3 lobisomens. O resto da sala vira aldeão ou recebe classes especiais, se essa opção estiver ligada.
+          </p>
+        </div>
+
+        <div className="pact-settings-grid">
+          <label className="pact-setting">
+            <span>Lobisomens</span>
+            <select
+              className="glass-select"
+              disabled={!isHost}
+              value={settings.wolfCount}
+              onChange={(event) => updateSettings({ wolfCount: Number(event.target.value) })}
+            >
+              <option value={1}>1 lobisomem</option>
+              <option value={2}>2 lobisomens</option>
+              <option value={3}>3 lobisomens</option>
+            </select>
+          </label>
+
+          <label className="pact-setting pact-toggle-setting">
+            <span>Classes especiais</span>
+            <input
+              type="checkbox"
+              disabled={!isHost}
+              checked={settings.specialRoles}
+              onChange={(event) => updateSettings({ specialRoles: event.target.checked })}
+            />
+          </label>
+        </div>
+
+        <div className="pact-rules-note">
+          <strong>{connectedPlayers.length}/20 jogadores</strong>
+          <span>Mínimo com essa configuração: {minimumPlayers}. Máximo da sala: 20.</span>
+          <span>{settings.specialRoles ? 'Classes especiais podem entrar além de aldeões comuns.' : 'Modo simples: lobisomens contra aldeões marcados.'}</span>
+        </div>
+
+        {isHost ? (
+          <button className="btn btn-primary" disabled={!canStart} onClick={() => socket?.emit('pact_start_game')}>
+            SELAR O PACTO
+          </button>
+        ) : (
+          <button className="btn btn-secondary" onClick={() => socket?.emit('pact_toggle_ready')}>
+            ALTERAR PRONTO
+          </button>
+        )}
+      </section>
+
+      <RoleGuide />
+    </>
+  );
+}
+
+function RoleCard({ roleName, hostNickname }) {
+  const guide = ROLE_GUIDE[roleName] || {
+    side: 'Desconhecido',
+    goal: 'Siga as mensagens da partida.',
+    night: 'Aguarde o comando da noite.',
+    extra: 'Sem regra adicional.',
+    tip: 'Observe os votos.'
+  };
+
+  return (
+    <section className="pact-role-card">
+      <span>Sua classe</span>
+      <strong>{roleName}</strong>
+      <div className="pact-role-details">
+        <p><b>Facção:</b> {guide.side}</p>
+        <p><b>Objetivo:</b> {guide.goal}</p>
+        <p><b>Noite:</b> {guide.night}</p>
+        <p><b>Detalhe:</b> {guide.extra}</p>
+        <p><b>Dica:</b> {guide.tip}</p>
+        {hostNickname && <p><b>Hospedeiro:</b> {hostNickname}</p>}
+      </div>
     </section>
   );
 }
@@ -251,11 +428,11 @@ function NightView(props) {
   return (
     <section className="pact-action-box">
       <h2>A Noite Caiu</h2>
-      <p>Escolha em silêncio. O amanhecer cobra tudo.</p>
+      <p>Escolha sua ação em silêncio. Depois toque em enviar. Se você não tiver poder, apenas aguarde a noite.</p>
       {hasAction ? (
         <>
           <select value={targetId} onChange={(event) => setTargetId(event.target.value)} className="glass-select">
-            <option value="">ALVO PRINCIPAL</option>
+            <option value="">{needsDead ? 'ESCOLHA UM MORTO' : 'ALVO PRINCIPAL'}</option>
             {targets.map(player => (
               <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
             ))}
@@ -300,7 +477,7 @@ function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket }) {
   return (
     <section className="pact-action-box">
       <h2>O Dia Abriu</h2>
-      <p>Discutam na vida real. Quando escolherem, votem no condenado.</p>
+      <p>Discutam na vida real. Quando a mesa decidir, cada pessoa viva vota em quem deve ser enforcado.</p>
       <div className="pact-vote-grid">
         {alivePlayers.map(player => (
           <button
@@ -324,6 +501,29 @@ function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket }) {
   );
 }
 
+function RoleGuide({ compact = false }) {
+  return (
+    <section className={`pact-guide ${compact ? 'is-compact' : ''}`}>
+      <span className="pact-section-label">Guia das classes</span>
+      {ROLE_ORDER.map((name) => {
+        const guide = ROLE_GUIDE[name];
+        return (
+          <details key={name} className="pact-guide-item">
+            <summary>
+              <strong>{name}</strong>
+              <small>{guide.side}</small>
+            </summary>
+            <p><b>Objetivo:</b> {guide.goal}</p>
+            <p><b>Ação:</b> {guide.night}</p>
+            <p><b>Regra:</b> {guide.extra}</p>
+            <p><b>Dica:</b> {guide.tip}</p>
+          </details>
+        );
+      })}
+    </section>
+  );
+}
+
 function LogPanel({ log }) {
   return (
     <section className="pact-log">
@@ -340,7 +540,7 @@ function PlayersPanel({ players, voteCounts }) {
         <div key={player.id} className={`pact-player ${player.alive ? '' : 'is-dead'}`}>
           <span>{player.nickname.toUpperCase()}</span>
           <small>
-            {player.alive ? `${voteCounts[player.id] || 0} votos` : player.revealedRole}
+            {!player.connected ? 'offline' : player.alive ? `${voteCounts[player.id] || 0} votos` : player.revealedRole}
           </small>
         </div>
       ))}
@@ -353,4 +553,14 @@ function phaseLabel(phase) {
   if (phase === 'NIGHT') return 'Noite';
   if (phase === 'DAY') return 'Dia';
   return 'Encerrado';
+}
+
+function getMinimumPlayers(wolfCount) {
+  if (wolfCount >= 3) return 8;
+  if (wolfCount === 2) return 6;
+  return 4;
+}
+
+function roleNameFromState(privateState) {
+  return privateState?.role?.name || '';
 }

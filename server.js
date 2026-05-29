@@ -42,6 +42,7 @@ const io = new Server(httpServer, {
 // }
 const rooms = new Map();
 const pactRooms = new Map();
+const MAX_PACT_PLAYERS = 20;
 
 // Função auxiliar para gerar código de sala aleatório (4 letras maiúsculas)
 function generateRoomId() {
@@ -443,6 +444,9 @@ io.on('connection', (socket) => {
     if (room.phase !== 'LOBBY') {
       return socket.emit('error_message', 'O pacto já foi selado nesta sala.');
     }
+    if (room.players.length >= MAX_PACT_PLAYERS) {
+      return socket.emit('error_message', 'A sala do Pacto está cheia. Máximo de 20 jogadores.');
+    }
 
     room.players.push({
       id: socket.id,
@@ -459,6 +463,39 @@ io.on('connection', (socket) => {
     emitPactRoom(room);
   });
 
+  socket.on('pact_sync_room', ({ roomId, nickname }) => {
+    const code = roomId?.toUpperCase().trim();
+    const name = nickname?.trim();
+    if (!code || !name) return;
+
+    const room = pactRooms.get(code);
+    if (!room) return;
+
+    const player = room.players.find(p =>
+      p.id === socket.id || p.nickname.toLowerCase() === name.toLowerCase()
+    );
+    if (!player) return;
+
+    player.id = socket.id;
+    player.connected = true;
+    socket.join(code);
+    emitPactRoom(room);
+    emitPactPrivate(room, player);
+  });
+
+  socket.on('pact_update_settings', ({ wolfCount, specialRoles }) => {
+    const { room, player } = getPactRoomAndPlayer(socket.id);
+    if (!room || !player?.isHost || room.phase !== 'LOBBY') return;
+
+    if (wolfCount !== undefined) {
+      room.settings.wolfCount = Math.min(3, Math.max(1, Math.floor(Number(wolfCount) || 1)));
+    }
+    if (specialRoles !== undefined) {
+      room.settings.specialRoles = Boolean(specialRoles);
+    }
+    emitPactRoom(room);
+  });
+
   socket.on('pact_toggle_ready', () => {
     const { room, player } = getPactRoomAndPlayer(socket.id);
     if (!room || !player || room.phase !== 'LOBBY' || player.isHost) return;
@@ -471,8 +508,9 @@ io.on('connection', (socket) => {
     if (!room || !player?.isHost || room.phase !== 'LOBBY') return;
 
     const activePlayers = room.players.filter(p => p.connected);
-    if (activePlayers.length < 4) {
-      return socket.emit('error_message', 'O Pacto precisa de pelo menos 4 jogadores.');
+    const minimumPlayers = getPactMinimumPlayers(room.settings.wolfCount);
+    if (activePlayers.length < minimumPlayers) {
+      return socket.emit('error_message', `Com ${room.settings.wolfCount} lobisomem(ns), o Pacto precisa de pelo menos ${minimumPlayers} jogadores.`);
     }
     if (!activePlayers.every(p => p.isHost || p.isReady)) {
       return socket.emit('error_message', 'Todos precisam estar prontos.');
@@ -576,6 +614,10 @@ function createPactRoom(roomId, hostId, nickname) {
     id: roomId,
     phase: 'LOBBY',
     hostId,
+    settings: {
+      wolfCount: 1,
+      specialRoles: true
+    },
     dayNumber: 0,
     nightNumber: 0,
     players: [{
@@ -603,6 +645,7 @@ function getPactPublicRoomState(room) {
     id: room.id,
     phase: room.phase,
     serverTime: Date.now(),
+    settings: room.settings,
     dayNumber: room.dayNumber,
     nightNumber: room.nightNumber,
     players: room.players.map(p => ({
@@ -646,7 +689,8 @@ function emitPactPrivateToAll(room) {
 
 function startPactGame(room) {
   const activePlayers = shuffle([...room.players.filter(p => p.connected)]);
-  const roles = buildPactRoleList(activePlayers.length);
+  room.settings.wolfCount = Math.min(3, Math.max(1, room.settings.wolfCount || 1));
+  const roles = buildPactRoleList(activePlayers.length, room.settings);
 
   activePlayers.forEach((player, index) => {
     player.role = roles[index] || PACT_ROLES.VILLAGER;
@@ -678,13 +722,33 @@ function startPactGame(room) {
   ];
 }
 
-function buildPactRoleList(count) {
-  const roles = [PACT_ROLES.ALPHA, PACT_ROLES.FLAGELLANT, PACT_ROLES.BUTCHER, PACT_ROLES.SUCCUBUS];
-  if (count >= 5) roles.push(PACT_ROLES.ABOMINATION);
-  if (count >= 6) roles.push(PACT_ROLES.COLLECTOR);
-  if (count >= 7) roles.push(PACT_ROLES.PARASITE);
+function buildPactRoleList(count, settings = {}) {
+  const wolfCount = Math.min(3, Math.max(1, settings.wolfCount || 1));
+  const roles = [PACT_ROLES.ALPHA];
+
+  if (wolfCount >= 2) roles.push(PACT_ROLES.ABOMINATION);
+  if (wolfCount >= 3) roles.push({ ...PACT_ROLES.ABOMINATION, name: 'Lobisomem da Matilha' });
+
+  if (settings.specialRoles !== false) {
+    const specials = [
+      PACT_ROLES.FLAGELLANT,
+      PACT_ROLES.BUTCHER,
+      PACT_ROLES.SUCCUBUS,
+      PACT_ROLES.COLLECTOR,
+      PACT_ROLES.PARASITE
+    ];
+    const specialSlots = Math.max(0, count - roles.length - 2);
+    roles.push(...specials.slice(0, specialSlots));
+  }
+
   while (roles.length < count) roles.push(PACT_ROLES.VILLAGER);
   return shuffle(roles);
+}
+
+function getPactMinimumPlayers(wolfCount) {
+  if (wolfCount >= 3) return 8;
+  if (wolfCount === 2) return 6;
+  return 4;
 }
 
 function normalizePactAction(room, player, action = {}) {
@@ -694,7 +758,7 @@ function normalizePactAction(room, player, action = {}) {
   const livingTarget = target?.alive ? target : null;
 
   if (room.nightDisabled) return { type: 'blocked' };
-  if ([PACT_ROLES.ALPHA.name, PACT_ROLES.ABOMINATION.name].includes(roleName)) {
+  if ([PACT_ROLES.ALPHA.name, PACT_ROLES.ABOMINATION.name, 'Lobisomem da Matilha'].includes(roleName)) {
     if (!livingTarget || livingTarget.id === player.id) return null;
     return {
       type: 'wolf_kill',
@@ -920,6 +984,7 @@ function resetPactRoom(room) {
     protectedNextNight: false
   }));
   room.hostId = room.players[0]?.id;
+  room.settings = room.settings || { wolfCount: 1, specialRoles: true };
 }
 
 function handlePactPlayerExit(socket, isDisconnect = false) {
