@@ -334,13 +334,13 @@ io.on('connection', (socket) => {
           }
         });
 
-        // Transiciona para JOGANDO e estabelece o cronômetro de 15 segundos para visualização
+        // Transiciona para JOGANDO e estabelece o cronômetro de 10 segundos para visualização
         currentRoom.gameState = 'PLAYING';
-        currentRoom.viewingEndTime = Date.now() + 15000;
+        currentRoom.viewingEndTime = Date.now() + 10000;
         currentRoom.starterPlayer = pickStarterPlayer(currentActivePlayers);
 
         io.to(currentRoom.id).emit('room_state', getPublicRoomState(currentRoom));
-        console.log(`Jogo iniciado na sala ${currentRoom.id}. Categoria: ${wordPair.category}. 15s para memorização.`);
+        console.log(`Jogo iniciado na sala ${currentRoom.id}. Categoria: ${wordPair.category}. 10s para memorização.`);
       }, 5000);
     }
   });

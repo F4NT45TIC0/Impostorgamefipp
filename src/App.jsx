@@ -16,12 +16,11 @@ export default function App() {
   
   const [errorMsg, setErrorMsg] = useState(null);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [cardRevealed, setCardRevealed] = useState(false);
   
   // Timers da aplicação
   const [timeLeft, setTimeLeft] = useState(0);              // Timer de Discussão
   const [prepTimeLeft, setPrepTimeLeft] = useState(0);      // Timer de Preparação (5s)
-  const [viewingTimeLeft, setViewingTimeLeft] = useState(0);  // Timer de Visualização (15s)
+  const [viewingTimeLeft, setViewingTimeLeft] = useState(0);  // Timer de Visualização (10s)
   
   const timerIntervalRef = useRef(null);
   const prepIntervalRef = useRef(null);
@@ -76,7 +75,6 @@ export default function App() {
       // Se voltarmos para o lobby, limpa os papéis privados e revelações
       if (state.gameState === 'LOBBY') {
         setPrivateGameState(null);
-        setCardRevealed(false);
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
         if (viewingIntervalRef.current) clearInterval(viewingIntervalRef.current);
@@ -95,7 +93,6 @@ export default function App() {
     socket.on('game_started', (privateData) => {
       updateServerOffset(privateData.serverTime);
       setPrivateGameState(privateData);
-      setCardRevealed(false); // Garante que começa fechado (por privacidade)
     });
 
     socket.on('discussion_started', ({ endTime, serverTime }) => {
@@ -166,7 +163,7 @@ export default function App() {
       setPrepTimeLeft(0);
     }
 
-    // 2. GERENCIAR CRONÔMETRO DE VISUALIZAÇÃO (15 segundos)
+    // 2. GERENCIAR CRONÔMETRO DE VISUALIZAÇÃO (10 segundos)
     if (roomState.gameState === 'PLAYING' && roomState.viewingEndTime) {
       if (viewingIntervalRef.current) clearInterval(viewingIntervalRef.current);
       
@@ -273,7 +270,6 @@ export default function App() {
     setRoomId(null);
     setRoomState(null);
     setPrivateGameState(null);
-    setCardRevealed(false);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
     if (viewingIntervalRef.current) clearInterval(viewingIntervalRef.current);
@@ -555,7 +551,7 @@ export default function App() {
         </div>
       )}
 
-      {/* TELA 4: PLAYING (Visualização Segura de 15s) */}
+      {/* TELA 4: PLAYING (Visualização Segura de 10s) */}
       {roomId && roomState && roomState.gameState === 'PLAYING' && privateGameState && (
         <div className="gameplay-screen glass-panel">
           <div className="game-header">
@@ -575,14 +571,13 @@ export default function App() {
                 </div>
                 {/* Barra de Progresso Rígida */}
                 <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.02)', borderRadius: '0px', overflow: 'hidden', marginBottom: '0.2rem' }}>
-                  <div style={{ width: `${(viewingTimeLeft / 15) * 100}%`, height: '100%', background: 'var(--amber-orange)', boxShadow: '0 0 5px var(--amber-glow)', transition: 'width 0.25s linear' }}></div>
+                  <div style={{ width: `${(viewingTimeLeft / 10) * 100}%`, height: '100%', background: 'var(--amber-orange)', boxShadow: '0 0 5px var(--amber-glow)', transition: 'width 0.25s linear' }}></div>
                 </div>
               </div>
 
               {/* Privacy Shield Card */}
               <div
-                className={`privacy-card ${cardRevealed ? 'is-revealed' : ''}`}
-                onClick={() => setCardRevealed(!cardRevealed)}
+                className="privacy-card is-revealed"
               >
                 <div className="privacy-card-inner">
                   {/* Frente do Card */}
@@ -602,13 +597,13 @@ export default function App() {
                       {privateGameState.word.toUpperCase()}
                     </span>
 
-                    <span className="reveal-tip">TOCAR PARA PROTEGER TELA</span>
+                    <span className="reveal-tip">MEMORIZE ANTES DO LOCKDOWN</span>
                   </div>
                 </div>
               </div>
             </>
           ) : (
-            /* ARQUIVOS APAGADOS APÓS 15 SEGUNDOS */
+            /* ARQUIVOS APAGADOS APÓS 10 SEGUNDOS */
             <div style={{
               display: 'flex',
               flexDirection: 'column',
