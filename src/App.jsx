@@ -6,6 +6,7 @@ const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3000' : window.locati
 let socket;
 
 export default function App() {
+  const [selectedGame, setSelectedGame] = useState(null);
   // Estados da aplicação
   const [nickname, setNickname] = useState(() => localStorage.getItem('impostor_nickname') || '');
   const [inputRoomId, setInputRoomId] = useState('');
@@ -323,6 +324,57 @@ export default function App() {
   const activePlayers = roomState?.players.filter(p => p.connected) || [];
   const isHost = me?.isHost || false;
 
+  if (!selectedGame) {
+    return (
+      <div className="hub-container">
+        <section className="hub-hero">
+          <div className="hub-brand-mark">AF</div>
+          <div>
+            <span className="hub-kicker">FACULDADE // ARCADE</span>
+            <h1 className="hub-title">ATLÉTICA FRIV</h1>
+            <p className="hub-subtitle">
+              Escolha um jogo para abrir uma sala com a galera.
+            </p>
+          </div>
+        </section>
+
+        <section className="hub-games-grid" aria-label="Jogos disponíveis">
+          <button className="hub-game-card is-available" onClick={() => setSelectedGame('impostor')}>
+            <span className="hub-game-status">DISPONÍVEL</span>
+            <span className="hub-game-art" aria-hidden="true">
+              <span className="hub-game-screen">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </span>
+            <span className="hub-game-title">Impostor</span>
+            <span className="hub-game-copy">
+              Palavra secreta, blefe e interrogatório em sala.
+            </span>
+            <span className="hub-play-cta">JOGAR AGORA</span>
+          </button>
+
+          <div className="hub-game-card is-locked">
+            <span className="hub-game-status">EM BREVE</span>
+            <span className="hub-game-art hub-game-placeholder" aria-hidden="true">
+              <span>?</span>
+            </span>
+            <span className="hub-game-title">Próximo Jogo</span>
+            <span className="hub-game-copy">
+              Um novo modo da Atlética vai aparecer aqui.
+            </span>
+            <span className="hub-play-cta">AGUARDANDO</span>
+          </div>
+        </section>
+
+        <footer className="app-footer">
+          ATLÉTICA FRIV // HUB DE JOGOS
+        </footer>
+      </div>
+    );
+  }
+
   // Renderização condicional por tela
   return (
     <div className="app-container">
@@ -337,6 +389,9 @@ export default function App() {
       {/* TELA 1: TELA INICIAL (Acesso ao Mainframe) */}
       {!roomId && (
         <div className="welcome-screen glass-panel">
+          <button type="button" className="hub-back-button" onClick={() => setSelectedGame(null)}>
+            VOLTAR AO HUB
+          </button>
           <div className="logo-container">
             <div className="logo-icon">IN</div>
             <h1>IMPOSTOR // CONTROL</h1>
