@@ -483,7 +483,7 @@ io.on('connection', (socket) => {
     emitPactPrivate(room, player);
   });
 
-  socket.on('pact_update_settings', ({ wolfCount, specialRoles }) => {
+  socket.on('pact_update_settings', ({ wolfCount, specialRoles, revealDeadRoles }) => {
     const { room, player } = getPactRoomAndPlayer(socket.id);
     if (!room || !player?.isHost || room.phase !== 'LOBBY') return;
 
@@ -492,6 +492,9 @@ io.on('connection', (socket) => {
     }
     if (specialRoles !== undefined) {
       room.settings.specialRoles = Boolean(specialRoles);
+    }
+    if (revealDeadRoles !== undefined) {
+      room.settings.revealDeadRoles = Boolean(revealDeadRoles);
     }
     emitPactRoom(room);
   });
@@ -616,7 +619,8 @@ function createPactRoom(roomId, hostId, nickname) {
     hostId,
     settings: {
       wolfCount: 1,
-      specialRoles: true
+      specialRoles: true,
+      revealDeadRoles: true
     },
     dayNumber: 0,
     nightNumber: 0,
@@ -656,7 +660,7 @@ function getPactPublicRoomState(room) {
       connected: p.connected,
       alive: p.alive,
       canVote: p.canVote,
-      revealedRole: !p.alive ? p.role?.name : null
+      revealedRole: !p.alive && room.settings.revealDeadRoles !== false ? p.role?.name : null
     })),
     votes: room.votes,
     log: room.log.slice(-8),
@@ -899,10 +903,14 @@ function executePactPlayer(room, targetId) {
   if (!target) return;
   target.alive = false;
   room.votes = {};
-  room.log.push(`${target.nickname} foi levado ao julgamento. A corda revelou: ${target.role.name}.`);
+  room.log.push(room.settings.revealDeadRoles !== false
+    ? `${target.nickname} foi levado ao julgamento. A corda revelou: ${target.role.name}.`
+    : `${target.nickname} foi levado ao julgamento. A corda não revelou sua classe.`);
   if (target.role.name === PACT_ROLES.FLAGELLANT.name) {
     room.nightDisabled = true;
-    room.log.push('A culpa do Flagelante caiu sobre todos. A próxima noite não terá habilidades.');
+    room.log.push(room.settings.revealDeadRoles !== false
+      ? 'A culpa do Flagelante caiu sobre todos. A próxima noite não terá habilidades.'
+      : 'Uma culpa pesada caiu sobre todos. A próxima noite não terá habilidades.');
   }
   const parasite = room.players.find(p => p.alive && p.role?.name === PACT_ROLES.PARASITE.name);
   if (parasite?.parasiteHostId === target.id) {
@@ -984,7 +992,11 @@ function resetPactRoom(room) {
     protectedNextNight: false
   }));
   room.hostId = room.players[0]?.id;
-  room.settings = room.settings || { wolfCount: 1, specialRoles: true };
+  room.settings = {
+    wolfCount: room.settings?.wolfCount || 1,
+    specialRoles: room.settings?.specialRoles !== false,
+    revealDeadRoles: room.settings?.revealDeadRoles !== false
+  };
 }
 
 function handlePactPlayerExit(socket, isDisconnect = false) {

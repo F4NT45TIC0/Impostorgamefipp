@@ -158,7 +158,8 @@ export default function PactGame({ socket, onBack }) {
   const livingTargets = alivePlayers.filter(player => player.id !== socket?.id);
   const anyTargets = roomState?.players.filter(player => player.id !== socket?.id) || [];
   const deadTargets = deadPlayers;
-  const settings = roomState?.settings || { wolfCount: 1, specialRoles: true };
+  const settings = roomState?.settings || { wolfCount: 1, specialRoles: true, revealDeadRoles: true };
+  const isDeadLocked = roomState?.phase !== 'LOBBY' && roomState?.phase !== 'ENDED' && me && !me.alive;
 
   const handleNicknameChange = (value) => {
     setNickname(value);
@@ -253,6 +254,10 @@ export default function PactGame({ socket, onBack }) {
           <span>{connectedPlayers.length}/20 conectados</span>
         </div>
 
+        {isDeadLocked ? (
+          <DeadScreen roleName={privateState?.role?.name} />
+        ) : (
+          <>
         {roomState.phase === 'LOBBY' && (
           <LobbyView
             roomState={roomState}
@@ -268,7 +273,7 @@ export default function PactGame({ socket, onBack }) {
           <RoleCard roleName={privateState.role.name} hostNickname={privateState.hostNickname} />
         )}
 
-        {roomState.phase === 'NIGHT' && (
+        {roomState.phase === 'NIGHT' && me?.alive && (
           <NightView
             roleName={roleName}
             livingTargets={livingTargets}
@@ -286,7 +291,7 @@ export default function PactGame({ socket, onBack }) {
           />
         )}
 
-        {roomState.phase === 'DAY' && (
+        {roomState.phase === 'DAY' && me?.alive && (
           <DayView
             alivePlayers={alivePlayers}
             me={me}
@@ -320,6 +325,8 @@ export default function PactGame({ socket, onBack }) {
             <span>Mensagens privadas</span>
             {privateState.privateLog.map((entry, index) => <p key={`${entry}-${index}`}>{entry}</p>)}
           </section>
+        )}
+          </>
         )}
       </section>
     </div>
@@ -365,12 +372,23 @@ function LobbyView({ roomState, isHost, socket, settings, updateSettings, connec
               onChange={(event) => updateSettings({ specialRoles: event.target.checked })}
             />
           </label>
+
+          <label className="pact-setting pact-toggle-setting">
+            <span>Revelar classe de morto</span>
+            <input
+              type="checkbox"
+              disabled={!isHost}
+              checked={settings.revealDeadRoles !== false}
+              onChange={(event) => updateSettings({ revealDeadRoles: event.target.checked })}
+            />
+          </label>
         </div>
 
         <div className="pact-rules-note">
           <strong>{connectedPlayers.length}/20 jogadores</strong>
           <span>Mínimo com essa configuração: {minimumPlayers}. Máximo da sala: 20.</span>
           <span>{settings.specialRoles ? 'Classes especiais podem entrar além de aldeões comuns.' : 'Modo simples: lobisomens contra aldeões marcados.'}</span>
+          <span>{settings.revealDeadRoles !== false ? 'Mortos revelam a classe publicamente.' : 'Mortos ficam com a classe escondida da mesa.'}</span>
         </div>
 
         {isHost ? (
@@ -386,6 +404,18 @@ function LobbyView({ roomState, isHost, socket, settings, updateSettings, connec
 
       <RoleGuide />
     </>
+  );
+}
+
+function DeadScreen({ roleName }) {
+  return (
+    <section className="pact-dead-screen">
+      <span>VOCÊ TÁ MORTO</span>
+      <strong>{roleName || 'SUA HISTÓRIA ACABOU'}</strong>
+      <p>
+        Você não pode mais votar, agir à noite ou influenciar a partida. Acompanhe em silêncio até o fim do pacto.
+      </p>
+    </section>
   );
 }
 
@@ -540,7 +570,7 @@ function PlayersPanel({ players, voteCounts }) {
         <div key={player.id} className={`pact-player ${player.alive ? '' : 'is-dead'}`}>
           <span>{player.nickname.toUpperCase()}</span>
           <small>
-            {!player.connected ? 'offline' : player.alive ? `${voteCounts[player.id] || 0} votos` : player.revealedRole}
+            {!player.connected ? 'offline' : player.alive ? `${voteCounts[player.id] || 0} votos` : (player.revealedRole || 'morto')}
           </small>
         </div>
       ))}

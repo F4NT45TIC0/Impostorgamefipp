@@ -587,6 +587,43 @@ button.hub-game-card:hover {
   font-weight: 400;
 }
 
+.pact-dead-screen {
+  min-height: min(62vh, 520px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.85rem;
+  background: #000;
+  border: 1px solid rgba(255, 51, 51, 0.55);
+  border-radius: 8px;
+  box-shadow: inset 0 0 46px rgba(255, 51, 51, 0.08), 0 0 22px rgba(0, 0, 0, 0.8);
+  padding: clamp(1.4rem, 6vw, 3rem);
+  text-align: center;
+}
+
+.pact-dead-screen span {
+  color: var(--impostor-red);
+  font-family: var(--font-mono);
+  font-size: clamp(2.3rem, 10vw, 5rem);
+  line-height: 0.95;
+  text-shadow: 0 0 16px rgba(255, 51, 51, 0.45);
+  text-transform: uppercase;
+}
+
+.pact-dead-screen strong {
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pact-dead-screen p {
+  max-width: 420px;
+  color: var(--text-secondary);
+}
+
 .pact-guide {
   display: flex;
   flex-direction: column;
