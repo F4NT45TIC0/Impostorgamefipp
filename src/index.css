@@ -1710,3 +1710,267 @@ p {
     border-color: rgba(255, 51, 51, 0.7);
   }
 }
+
+/* ==========================================================================
+   🕸️ GOTHIC GLASSMORPHISM OVERLAYS & CORE SYSTEM (O PACTO DE SANGUE)
+   ========================================================================== */
+
+/* Font Overrides */
+.pact-container,
+.pact-panel,
+.pact-dead-screen {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+.pact-title,
+.pact-role-card strong,
+.pact-dead-screen span,
+.pact-guide-item summary strong,
+.pact-section-label,
+.pact-ending h2,
+.pact-action-box h2,
+.pact-role-details p b,
+.pact-guide-item p b,
+.pact-player span,
+.pact-vote-button span,
+.pact-lobby-actions p b {
+  font-family: 'Cinzel', serif !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* Crimson Ambient Glow (Blood Moon) */
+.pact-panel {
+  background: rgba(14, 8, 8, 0.95) !important;
+  border: 1px solid rgba(186, 12, 12, 0.35) !important;
+  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.95), inset 0 0 20px rgba(186, 12, 12, 0.08) !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pact-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% -20%, rgba(186, 12, 12, 0.18) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Phase Transitions (Night vs Day styles) */
+.pact-panel.is-night {
+  background: rgba(8, 8, 12, 0.96) !important;
+  border-color: rgba(100, 100, 220, 0.22) !important;
+  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.95), inset 0 0 25px rgba(100, 100, 220, 0.06) !important;
+}
+
+.pact-panel.is-night::before {
+  background: radial-gradient(circle at 50% -20%, rgba(80, 80, 200, 0.14) 0%, transparent 68%);
+}
+
+.pact-panel.is-night .pact-title {
+  text-shadow: 0 0 15px rgba(100, 100, 220, 0.4);
+}
+
+/* 3D tarot card flip container */
+.pact-card-container {
+  perspective: 1000px;
+  width: 100%;
+  max-width: 320px;
+  height: 220px;
+  margin: 0.6rem auto;
+}
+
+.pact-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.pact-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.pact-card-front,
+.pact-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.2rem;
+  box-sizing: border-box;
+}
+
+.pact-card-front {
+  background: #140d0d;
+  border: 1px solid rgba(186, 12, 12, 0.35);
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.85);
+  color: #ba0c0c;
+}
+
+.pact-card-front::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(186, 12, 12, 0.15);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.pact-card-back {
+  background: #0d0d0c;
+  border: 1px solid rgba(0, 230, 118, 0.35);
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+  color: #fff;
+  transform: rotateY(180deg);
+}
+
+.pact-card-back.is-wolf {
+  border-color: rgba(186, 12, 12, 0.45);
+}
+
+.pact-card-back.is-neutral {
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+/* 🥴 RESSACA VISUAL DEBUFF (PADEIRO) */
+.has-hangover {
+  filter: blur(2.5px) sepia(0.35) saturate(1.25) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  transition: filter 0.4s ease;
+}
+
+.hangover-alert-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(212, 175, 55, 0.07);
+  box-shadow: inset 0 0 75px rgba(212, 175, 55, 0.18);
+  pointer-events: none;
+  z-index: 990;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: clamp(1rem, 5vw, 3rem);
+}
+
+.hangover-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: #d4af37;
+  padding: 0.35rem 0.8rem;
+  border-radius: 4px;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+  letter-spacing: 0.08em;
+  animation: floatBounce 2.5s infinite ease-in-out;
+}
+
+/* ⛓️ PARALISIA / MORDAÇA VISUAL DEBUFF (HIPNOTISTA) */
+.has-gagged {
+  filter: brightness(0.35) contrast(1.15) grayscale(0.5) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.gagged-alert-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 5, 5, 0.88);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.gagged-chains-icon {
+  width: 72px;
+  height: 72px;
+  border: 2px solid #8b0000;
+  background: rgba(139, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #ba0c0c;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(186, 12, 12, 0.3);
+  animation: shakeChain 4s infinite ease-in-out;
+}
+
+.gagged-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.4rem, 5vw, 1.8rem);
+  color: #ba0c0c;
+  text-shadow: 0 0 10px rgba(186, 12, 12, 0.5);
+  margin: 0;
+}
+
+/* 📻 RÁDIO TEODORO AM (DISTRUST EFFECT) */
+.radio-conspiracy-indicator {
+  width: 100%;
+  border: 1px dashed rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.04);
+  padding: 0.65rem 0.9rem;
+  border-radius: 6px;
+  margin-bottom: 0.6rem;
+  font-family: 'Outfit', sans-serif;
+  box-sizing: border-box;
+}
+
+.radio-conspiracy-indicator span {
+  font-family: 'Cinzel', serif;
+  color: #d4af37;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+/* Agiota mark */
+.debt-blood-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 0.65rem;
+  color: #ba0c0c;
+  border: 1px solid rgba(186, 12, 12, 0.4);
+  background: rgba(186, 12, 12, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  animation: pulseDimText 1s infinite alternate;
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+
+/* Animations */
+@keyframes shakeChain {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  20%, 60% { transform: translateY(-4px) rotate(-6deg); }
+  40%, 80% { transform: translateY(2px) rotate(6deg); }
+}
+
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulseHangover {
+  0% { background: rgba(212, 175, 55, 0.04); }
+  100% { background: rgba(212, 175, 55, 0.09); }
+}
+
