@@ -321,7 +321,7 @@ export default function PactGame({ socket, onBack }) {
         
         <div className="pact-room-header">
           <div>
-            <span className="hub-kicker" style={{ color: isNight ? '#8b93ff' : '#ba0c0c', fontFamily: 'Outfit', fontWeight: '500' }}>SALA CRIPTOGRAFADA {roomId}</span>
+            <span className="hub-kicker" style={{ color: isNight ? '#8b93ff' : '#ba0c0c', fontFamily: 'Outfit', fontWeight: '500' }}>SALA DE JOGO</span>
             <h1 className="pact-title" style={{ textShadow: isNight ? '0 0 10px rgba(100,100,220,0.3)' : '0 0 10px rgba(186,12,12,0.35)' }}>
               O PACTO DE SANGUE
             </h1>
@@ -441,7 +441,10 @@ export default function PactGame({ socket, onBack }) {
             )}
 
             <LogPanel log={roomState.log} />
-            <PlayersPanel players={roomState.players} voteCounts={voteCounts} />
+            
+            {roomState.phase !== 'LOBBY' && (
+              <PlayersPanel players={roomState.players} voteCounts={voteCounts} />
+            )}
 
             {roomState.phase !== 'LOBBY' && <RoleGuide compact />}
 
@@ -459,17 +462,49 @@ export default function PactGame({ socket, onBack }) {
 }
 
 function LobbyView({ roomState, isHost, socket, settings, updateSettings, connectedPlayers }) {
+  const [copied, setCopied] = useState(false);
+  
   const ready = roomState.players.every(player => player.isHost || player.isReady);
   const minimumPlayers = getMinimumPlayers(settings.wolfCount);
   const canStart = connectedPlayers.length >= minimumPlayers && ready;
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(roomState.id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <>
+      <div onClick={handleCopy} style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(186, 12, 12, 0.04)',
+        border: '1px dashed rgba(186, 12, 12, 0.35)',
+        borderRadius: '8px',
+        padding: '1.2rem',
+        cursor: 'pointer',
+        marginBottom: '1rem',
+        textAlign: 'center',
+        transition: 'all 0.2s',
+        userSelect: 'none'
+      }} className="pact-room-code-card">
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Outfit' }}>CÓDIGO DE ACESSO DA SALA</span>
+        <strong style={{ fontSize: '3rem', letterSpacing: '0.25em', color: '#fff', textShadow: '0 0 12px rgba(255,255,255,0.18)', fontFamily: 'Outfit', display: 'block', margin: '0.3rem 0', paddingLeft: '0.25em' }}>
+          {roomState.id}
+        </strong>
+        <span style={{ fontSize: '0.75rem', color: copied ? '#00e676' : '#ba0c0c', fontFamily: 'Outfit', fontWeight: 'bold' }}>
+          {copied ? '✓ CÓDIGO COPIADO!' : 'Clique aqui para copiar o código'}
+        </span>
+      </div>
+
       <section className="pact-lobby-actions">
         <div>
-          <span className="pact-section-label" style={{ color: '#ba0c0c' }}>Preparação do Pacto de Sangue</span>
+          <span className="pact-section-label" style={{ color: '#ba0c0c' }}>Parâmetros do Pacto de Sangue</span>
           <p style={{ margin: '0.2rem 0 0 0', lineHeight: 1.4 }}>
-            O dono da sala configura o número de lobisomens. Ao iniciar, todos os integrantes receberão suas classes secretas de <b>Teodoro Sampaio</b>.
+            Configure a quantidade de lobos na matilha e aguarde os moradores ficarem prontos antes de iniciar a partida.
           </p>
         </div>
 
@@ -510,20 +545,58 @@ function LobbyView({ roomState, isHost, socket, settings, updateSettings, connec
           </label>
         </div>
 
-        <div className="pact-rules-note" style={{ borderColor: '#ba0c0c', background: 'rgba(186,12,12,0.03)' }}>
-          <strong>{connectedPlayers.length}/20 moradores na vila</strong>
-          <span>Mínimo necessário para esta configuração: {minimumPlayers} jogadores.</span>
-          <span>{settings.specialRoles ? 'Classes avançadas da Vila e Neutros caóticos ativadas.' : 'Modo clássico puro: Apenas lobos e aldeões simples.'}</span>
-          <span>{settings.revealDeadRoles !== false ? 'Classes de moradores enforcados serão reveladas.' : 'As classes dos mortos permanecerão um mistério.'}</span>
+        {/* LISTA EXPLICITA DE JOGADORES NO LOBBY */}
+        <div style={{ marginTop: '0.8rem', textAlign: 'left' }}>
+          <span className="pact-section-label" style={{ color: '#ba0c0c', display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            Moradores na Sala ({connectedPlayers.length}/20)
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+            {roomState.players.map(player => {
+              const isMe = player.id === socket?.id;
+              return (
+                <div key={player.id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  padding: '0.6rem 0.9rem',
+                  borderRadius: '6px'
+                }}>
+                  <span style={{ color: '#fff', fontFamily: 'Outfit', fontWeight: isMe ? 'bold' : 'normal', fontSize: '0.9rem' }}>
+                    {player.nickname.toUpperCase()} {player.isHost ? '👑 [LÍDER]' : ''} {isMe ? ' (VOCÊ)' : ''}
+                  </span>
+                  <div>
+                    {!player.connected ? (
+                      <span style={{ fontSize: '0.68rem', border: '1px solid #ba0c0c', background: 'rgba(186,12,12,0.08)', color: '#ba0c0c', padding: '0.2rem 0.5rem', borderRadius: '3px', fontWeight: '500' }}>OFFLINE</span>
+                    ) : player.isHost ? (
+                      <span style={{ fontSize: '0.68rem', border: '1px solid #d4af37', background: 'rgba(212,175,55,0.08)', color: '#d4af37', padding: '0.2rem 0.5rem', borderRadius: '3px', fontWeight: 'bold' }}>HOST</span>
+                    ) : player.isReady ? (
+                      <span style={{ fontSize: '0.68rem', border: '1px solid #00e676', background: 'rgba(0,230,118,0.08)', color: '#00e676', padding: '0.2rem 0.5rem', borderRadius: '3px', fontWeight: 'bold', boxShadow: '0 0 6px rgba(0,230,118,0.2)' }}>PRONTO</span>
+                    ) : (
+                      <span style={{ fontSize: '0.68rem', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.4)', padding: '0.2rem 0.5rem', borderRadius: '3px', fontWeight: '500' }}>AGUARDANDO</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="pact-rules-note" style={{ borderColor: '#ba0c0c', background: 'rgba(186,12,12,0.03)', marginTop: '0.5rem' }}>
+          <strong>Configuração ativa do Pacto</strong>
+          <span>Mínimo necessário com esta ameaça: {minimumPlayers} jogadores.</span>
+          <span>{settings.specialRoles ? 'Classes avançadas de Teodoro Sampaio ativadas.' : 'Modo clássico básico: Lobisomens contra Aldeões Marcados.'}</span>
+          <span>{settings.revealDeadRoles !== false ? 'Classes reveladas em caso de enforcamento.' : 'Classes ocultas em caso de enforcamento.'}</span>
         </div>
 
         {isHost ? (
           <button className="btn btn-danger" disabled={!canStart} onClick={() => socket?.emit('pact_start_game')}>
-            SELAR PACTO DE SANGUE
+            INICIAR PARTIDA
           </button>
         ) : (
           <button className="btn btn-glass" onClick={() => socket?.emit('pact_toggle_ready')}>
-            ALTERAR PRONTO
+            MUDAR STATUS (PRONTO)
           </button>
         )}
       </section>
