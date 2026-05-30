@@ -1718,25 +1718,32 @@ p {
 /* Font Overrides */
 .pact-container,
 .pact-panel,
-.pact-dead-screen {
+.pact-dead-screen,
+.pact-role-card,
+.pact-action-box,
+.pact-guide,
+.pact-log,
+.pact-private-log,
+.pact-players,
+.pact-ending,
+.pact-lobby-actions,
+.pact-vote-button,
+.pact-player,
+.pact-setting,
+.glass-select {
   font-family: 'Outfit', sans-serif !important;
 }
 
 .pact-title,
-.pact-role-card strong,
 .pact-dead-screen span,
-.pact-guide-item summary strong,
-.pact-section-label,
 .pact-ending h2,
 .pact-action-box h2,
-.pact-role-details p b,
-.pact-guide-item p b,
-.pact-player span,
-.pact-vote-button span,
-.pact-lobby-actions p b {
+.gagged-title {
   font-family: 'Cinzel', serif !important;
   letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
 }
+
 
 /* Crimson Ambient Glow (Blood Moon) */
 .pact-panel {

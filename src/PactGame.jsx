@@ -269,19 +269,19 @@ export default function PactGame({ socket, onBack }) {
         <section className="pact-panel pact-entry">
           <span className="hub-kicker" style={{ color: '#ba0c0c' }}>LOBISOMEM // SOCIEDADE OCULTA</span>
           <h1 className="pact-title" style={{ borderBottomColor: '#ba0c0c', textShadow: '0 0 10px rgba(186,12,12,0.45)' }}>O PACTO DE SANGUE</h1>
-          <p>
+          <p style={{ fontFamily: 'Outfit', fontSize: '0.9rem', lineHeight: 1.4 }}>
             A névoa úmida fechou os portões da Vila de Teodoro Sampaio. Crie uma sala, escolha as regras e encare classes altamente estratégicas e caóticas.
           </p>
 
           <form onSubmit={createRoom} className="pact-form" style={{ borderColor: 'rgba(186,12,12,0.2)' }}>
-            <label>Seu Apelido</label>
-            <input value={nickname} onChange={(event) => handleNicknameChange(event.target.value)} maxLength={15} required autoComplete="nickname" />
+            <label style={{ fontFamily: 'Outfit', fontWeight: '500', fontSize: '0.8rem' }}>Seu Apelido</label>
+            <input value={nickname} onChange={(event) => handleNicknameChange(event.target.value)} maxLength={15} required autoComplete="nickname" style={{ fontFamily: 'Outfit' }} />
             <button className="btn btn-danger" type="submit">CRIAR PACTO DE SANGUE</button>
           </form>
 
           <form onSubmit={joinRoom} className="pact-form" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-            <label>Código da sala</label>
-            <input value={inputRoomId} onChange={(event) => setInputRoomId(event.target.value.toUpperCase())} maxLength={4} placeholder="ABCD" autoCapitalize="characters" />
+            <label style={{ fontFamily: 'Outfit', fontWeight: '500', fontSize: '0.8rem' }}>Código da sala</label>
+            <input value={inputRoomId} onChange={(event) => setInputRoomId(event.target.value.toUpperCase())} maxLength={4} placeholder="ABCD" autoCapitalize="characters" style={{ fontFamily: 'Outfit' }} />
             <button className="btn btn-glass" type="submit">ENTRAR NO PACTO</button>
           </form>
 
@@ -304,7 +304,7 @@ export default function PactGame({ socket, onBack }) {
         <div className="gagged-alert-overlay">
           <div className="gagged-chains-icon">⛓️</div>
           <h2 className="gagged-title">PARALISIA DO PAVOR</h2>
-          <p style={{ color: '#ba0c0c', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+          <p style={{ color: '#ba0c0c', fontFamily: 'Outfit', fontSize: '0.85rem' }}>
             Você foi amordaçado pelo pânico esta noite. Suas opções de voto e debate foram trancadas!
           </p>
         </div>
@@ -321,7 +321,7 @@ export default function PactGame({ socket, onBack }) {
         
         <div className="pact-room-header">
           <div>
-            <span className="hub-kicker" style={{ color: isNight ? '#5b62a6' : '#ba0c0c' }}>SALA CRIPTOGRAFADA {roomId}</span>
+            <span className="hub-kicker" style={{ color: isNight ? '#8b93ff' : '#ba0c0c', fontFamily: 'Outfit', fontWeight: '500' }}>SALA CRIPTOGRAFADA {roomId}</span>
             <h1 className="pact-title" style={{ textShadow: isNight ? '0 0 10px rgba(100,100,220,0.3)' : '0 0 10px rgba(186,12,12,0.35)' }}>
               O PACTO DE SANGUE
             </h1>
@@ -348,7 +348,7 @@ export default function PactGame({ socket, onBack }) {
         {roomState.radioDirective && roomState.phase === 'DAY' && (
           <div className="radio-conspiracy-indicator">
             <span>📻 RÁDIO TEODORO AM (DIRETRIZ ATIVA)</span>
-            <p style={{ color: '#fff', fontSize: '0.9rem', margin: 0 }}>
+            <p style={{ color: '#fff', fontSize: '0.9rem', margin: 0, lineHeight: 1.4 }}>
               <b>{roomState.radioDirective}:</b> {
                 roomState.radioDirective === 'Lei Seca' ? 'O julgamento foi cancelado hoje. Nenhum morador pode votar.' :
                 roomState.radioDirective === 'Fake News' ? 'A vila enforcará o morador com MENOS votos (mínimo de 1 voto).' :
@@ -431,7 +431,7 @@ export default function PactGame({ socket, onBack }) {
               <section className="pact-ending" style={{ borderColor: '#ba0c0c', background: 'rgba(14,8,8,0.7)' }}>
                 <span>FIM DO PACTO DE SANGUE</span>
                 <h2 style={{ color: '#ba0c0c' }}>{roomState.winner?.faction}</h2>
-                <p style={{ color: '#fff', fontSize: '1.05rem' }}>{roomState.winner?.text}</p>
+                <p style={{ color: '#fff', fontSize: '1.05rem', lineHeight: 1.4 }}>{roomState.winner?.text}</p>
                 {isHost && (
                   <button className="btn btn-danger" onClick={() => socket?.emit('pact_restart_lobby')} style={{ width: 'auto', alignSelf: 'center', marginTop: '0.8rem' }}>
                     REABRIR LOBBY DA VILA
@@ -467,8 +467,8 @@ function LobbyView({ roomState, isHost, socket, settings, updateSettings, connec
     <>
       <section className="pact-lobby-actions">
         <div>
-          <span className="pact-section-label">Preparação do Pacto de Sangue</span>
-          <p>
+          <span className="pact-section-label" style={{ color: '#ba0c0c' }}>Preparação do Pacto de Sangue</span>
+          <p style={{ margin: '0.2rem 0 0 0', lineHeight: 1.4 }}>
             O dono da sala configura o número de lobisomens. Ao iniciar, todos os integrantes receberão suas classes secretas de <b>Teodoro Sampaio</b>.
           </p>
         </div>
@@ -481,7 +481,7 @@ function LobbyView({ roomState, isHost, socket, settings, updateSettings, connec
               disabled={!isHost}
               value={settings.wolfCount}
               onChange={(event) => updateSettings({ wolfCount: Number(event.target.value) })}
-              style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)' }}
+              style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)', fontFamily: 'Outfit' }}
             >
               <option value={1}>1 lobisomem</option>
               <option value={2}>2 lobisomens</option>
@@ -538,7 +538,7 @@ function DeadScreen({ roleName }) {
     <section className="pact-dead-screen" style={{ borderColor: '#ba0c0c' }}>
       <span>SUA VIDA SE FOI</span>
       <strong>{roleName || 'SUA HISTÓRIA TERMINOU'}</strong>
-      <p>
+      <p style={{ lineHeight: 1.4 }}>
         Você foi assassinado ou enforcado por Teodoro Sampaio. Agora você é um espírito silencioso, apenas assistindo até o fim do pacto.
       </p>
     </section>
@@ -564,13 +564,13 @@ function RoleCard({ roleName, hostNickname, stolenAbility, debtorOfNickname, tea
         {/* Card Front: Confidencial */}
         <div className="pact-card-front">
           <div className="shield-icon-container" style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)', background: 'rgba(186,12,12,0.04)' }}>
-            SEGREDOS DA NOITE
+            REVELAR CLASSE SECRETAMENTE
           </div>
-          <span className="shield-title" style={{ color: '#ba0c0c', textShadow: '0 0 5px rgba(186,12,12,0.4)' }}>
-            REVELAR CLASSE
+          <span className="shield-title" style={{ color: '#ba0c0c', textShadow: '0 0 5px rgba(186,12,12,0.4)', fontFamily: 'Outfit', fontWeight: 'bold' }}>
+            TOQUE PARA ABRIR DOSSIÊ
           </span>
           <span className="shield-subtitle" style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-            Toque para girar a carta de forma segura.
+            Proteja a tela dos vizinhos de Teodoro.
           </span>
         </div>
 
@@ -579,17 +579,20 @@ function RoleCard({ roleName, hostNickname, stolenAbility, debtorOfNickname, tea
           <span className="role-badge-large" style={{ 
             color: sideColor, 
             borderColor: sideColor, 
-            background: `${sideColor}08` 
+            background: `${sideColor}08`,
+            fontFamily: 'Outfit',
+            fontWeight: 'bold',
+            fontSize: '1rem'
           }}>
             {roleName}
           </span>
-          <div className="pact-role-details" style={{ fontSize: '0.8rem', textAlign: 'left', width: '100%' }}>
+          <div className="pact-role-details" style={{ fontSize: '0.82rem', textAlign: 'left', width: '100%', lineHeight: 1.45 }}>
             <p><b>Facção:</b> <span style={{ color: sideColor }}>{guide.side}</span></p>
             <p><b>Meta:</b> {guide.goal}</p>
             <p><b>Ação:</b> {guide.night}</p>
             <p><b>Bônus:</b> {guide.extra}</p>
             {stolenAbility && <p style={{ color: '#00e676' }}><b>Poder Roubado:</b> {stolenAbility.name}</p>}
-            {debtorOfNickname && <p className="debt-blood-badge">Seu voto pertence ao Agiota ({debtorOfNickname})</p>}
+            {debtorOfNickname && <p className="debt-blood-badge" style={{ fontFamily: 'Outfit' }}>Seu voto pertence ao Agiota ({debtorOfNickname})</p>}
             {hostNickname && <p><b>Hospedeiro:</b> {hostNickname}</p>}
           </div>
         </div>
@@ -607,155 +610,260 @@ function NightView(props) {
     submitNightAction, isHost, socket, usedDirectives, alphaHowlUsed
   } = props;
 
-  const needsDead = roleName === 'O Coveiro Ladrão de Túmulos';
-  const targets = needsDead ? deadTargets : livingTargets;
+  // Se o jogador não tiver ação na noite
+  const hasAction = !['Aldeão Marcado', 'O Parasita Sombrio'].includes(roleName);
 
-  // lobisomens adicionais
+  if (!hasAction) {
+    return (
+      <section className="pact-action-box" style={{ borderColor: 'rgba(100,100,220,0.18)', background: 'rgba(8,8,12,0.92)', textAlign: 'center', padding: '2rem 1.5rem' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '0.5rem', animation: 'floatBounce 3s infinite ease-in-out' }}>🌕</div>
+        <h2 style={{ color: '#8b93ff', justifyContent: 'center' }}>Noite Calma em Teodoro</h2>
+        <p style={{ color: '#a0a0b0', maxWidth: '320px', margin: '0.5rem auto 1.5rem auto', fontSize: '0.9rem', lineHeight: 1.45 }}>
+          Você é um <b>{roleName}</b>. Recolha-se à sua residência, feche bem as portas e aguarde o amanhecer na vila...
+        </p>
+        <button className="btn btn-glass" disabled style={{ opacity: 0.5 }}>
+          AGUARDANDO O DIA...
+        </button>
+        {isHost && (
+          <button className="btn btn-accent" onClick={() => socket?.emit('pact_resolve_night')} style={{ marginTop: '1rem' }}>
+            RESOLVER A NOITE (HOST)
+          </button>
+        )}
+      </section>
+    );
+  }
+
+  // Identificação detalhada do papel
+  const isAlpha = roleName === 'O Alfa Alfaçado';
   const isIlusionista = roleName === 'O Lobisomem Ilusionista';
   const isHipnotista = roleName === 'O Lobisomem Hipnotista';
   const isMimetico = roleName === 'O Lobisomem Mimético';
-  const isAlpha = roleName === 'O Alfa Alfaçado';
+  const isAcossado = roleName === 'O Lobisomem Acossado';
+  const isLobo = [isAlpha, isIlusionista, isHipnotista, isMimetico, isAcossado].some(Boolean);
 
-  // Vila adicionais
+  const isPadeiro = roleName === 'O Padeiro da Taverna';
+  const isBenzedeira = roleName === 'A Benzedeira Curandeira';
   const isFiscal = roleName === 'O Fiscal da Prefeitura';
+  const isCoveiro = roleName === 'O Coveiro Ladrão de Túmulos';
+  const isFofoqueiro = roleName === 'O Fofoqueiro da Paróquia';
   const isBeata = roleName === 'A Beata Milagrosa';
-  
-  // Neutro
-  const isRadialista = roleName === 'O Radialista da Rádio Teodoro';
 
-  const hasAction = !['Aldeão Marcado', 'O Parasita Sombrio'].includes(roleName);
+  const isAgiota = roleName === 'O Agiota de Teodoro';
+  const isRadialista = roleName === 'O Radialista da Rádio Teodoro';
+  
+  const needsDead = isCoveiro;
+  const targets = needsDead ? deadTargets : livingTargets;
 
   return (
-    <section className="pact-action-box" style={{ borderColor: 'rgba(100,100,220,0.3)', background: 'rgba(8,8,12,0.85)' }}>
-      <h2 style={{ color: '#8b93ff' }}>A Noite Caiu</h2>
-      <p style={{ color: '#a0a0b0' }}>Use seus poderes secretos e sele sua ação. Se você não possuir poder ou já agiu, apenas aguarde.</p>
+    <section className="pact-action-box" style={{ borderColor: 'rgba(100,100,220,0.3)', background: 'rgba(8,8,12,0.88)' }}>
+      <h2 style={{ color: '#8b93ff' }}>Ações da Noite</h2>
       
-      {hasAction ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
-          
-          {/* Target principal (para a maioria das classes e ataque comum dos lobos) */}
-          {!isRadialista && (
+      {/* Guia Intuitiva Específica por Classe */}
+      <div style={{ background: 'rgba(100,100,220,0.03)', borderLeft: '3px solid #8b93ff', padding: '0.75rem 1rem', borderRadius: '4px', marginBottom: '0.8rem', textAlign: 'left' }}>
+        {isLobo && (
+          <>
+            <strong style={{ color: '#ba0c0c', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>🩸 A MATILHA PROFANA</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Selecione o alvo da matilha para caçar esta noite. Combinem o mesmo alvo para garantir o ataque!
+            </p>
+          </>
+        )}
+        {isPadeiro && (
+          <>
+            <strong style={{ color: '#d4af37', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>🥖 O PÃO COM CACHAÇA</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Dê cachaça com pão para proteger de morte hoje. Se der para um lobo, ele fica com ressaca e neutraliza o ataque da matilha amanhã!
+            </p>
+          </>
+        )}
+        {isBenzedeira && (
+          <>
+            <strong style={{ color: '#00e676', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>🌿 CURA E REVELAÇÃO</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Use a garrafada de ervas. Se for lobo, ele é queimado e revelado para você. Se for aldeão, cura todos os seus debuffs!
+            </p>
+          </>
+        )}
+        {isFiscal && (
+          <>
+            <strong style={{ color: '#00e676', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>📋 AUDITORIA MUNICIPAL</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Selecione dois moradores vivos para descobrir se pertencem à mesma facção ou a facções diferentes.
+            </p>
+          </>
+        )}
+        {isCoveiro && (
+          <>
+            <strong style={{ color: '#00e676', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>🪦 PROFANAÇÃO DE TÚMULO</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Escolha um morador morto recente. Você descobrirá a classe dele e roubará seu poder ativo para usar na próxima noite!
+            </p>
+          </>
+        )}
+        {isFofoqueiro && (
+          <>
+            <strong style={{ color: '#00e676', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>👁️ ESPIONAGEM DA PARÓQUIA</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Vigie uma casa para contar quantas visitas (ações de qualquer tipo) ela recebeu durante a calada da noite.
+            </p>
+          </>
+        )}
+        {isBeata && (
+          <>
+            <strong style={{ color: '#00e676', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>⛪ ORAÇÃO SAGRADA</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Ore por um morador vivo para protegê-lo de morte, ou por um morto recente para purificá-lo e revelar sua classe para toda a vila!
+            </p>
+          </>
+        )}
+        {isAgiota && (
+          <>
+            <strong style={{ color: '#d4af37', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>💰 EMPRÉSTIMO DE SANGUE</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Proteja um jogador de morte hoje. Em troca, o voto dele amanhã pertencerá inteiramente a você! Acumule 3 devedores vivos para vencer!
+            </p>
+          </>
+        )}
+        {isRadialista && (
+          <>
+            <strong style={{ color: '#d4af37', fontFamily: 'Outfit', fontSize: '0.85rem', fontWeight: 'bold' }}>📻 RÁDIO TEODORO FM</strong>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>
+              Transmita uma Teoria da Conspiração que mudará as regras de votação de amanhã. Transmita as 3 com sucesso para ganhar o jogo!
+            </p>
+          </>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', textAlign: 'left' }}>
+        
+        {/* Campo do Alvo Principal (caçar para lobos ou alvos padrão de outras classes) */}
+        {!isRadialista && (
+          <label className="pact-setting">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              {isLobo ? 'Escolher Vítima para Caçar' :
+               isPadeiro ? 'Escolher Morador para Receber o Pão' :
+               isBenzedeira ? 'Escolher Morador para Receber Garrafada' :
+               isFiscal ? 'Primeiro Morador para Auditoria' :
+               isCoveiro ? 'Escolher Morador Falecido para Exumar' :
+               isFofoqueiro ? 'Escolher Casa de Morador para Vigiar' :
+               isBeata ? 'Escolher Morador (Vivo ou Morto) para Orar' :
+               isAgiota ? 'Escolher Jogador para o Empréstimo' :
+               'Selecionar Alvo principal'}
+            </span>
+            <select value={targetId} onChange={(event) => setTargetId(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: isLobo ? '#ba0c0c' : '#8b93ff', borderColor: isLobo ? 'rgba(186,12,12,0.3)' : 'rgba(100,100,220,0.3)', fontFamily: 'Outfit' }}>
+              <option value="">{needsDead ? '--- ESCOLHER MORTO ---' : '--- SELECIONE UM MORADOR ---'}</option>
+              {(isBeata ? anyTargets : targets).map(player => (
+                <option key={player.id} value={player.id}>{player.nickname.toUpperCase()} {!player.alive ? ' (FALECIDO)' : ''}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {/* Campo de Seleção do Radialista */}
+        {isRadialista && (
+          <label className="pact-setting">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Selecione a Transmissão de Rádio de Hoje</span>
+            <select value={directive} onChange={(event) => setDirective(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: '#d4af37', borderColor: 'rgba(212,175,55,0.3)', fontFamily: 'Outfit' }}>
+              <option value="">--- TRANSMISSÃO DA MADRUGADA ---</option>
+              {!usedDirectives.includes('Lei Seca') && <option value="Lei Seca">LEI SECA (Ninguém vota no dia seguinte)</option>}
+              {!usedDirectives.includes('Fake News') && <option value="Fake News">FAKE NEWS (Enforca o menos votado no dia seguinte)</option>}
+              {!usedDirectives.includes('Censura Federal') && <option value="Censura Federal">CENSURA FEDERAL (Votos 100% secretos no dia)</option>}
+            </select>
+          </label>
+        )}
+
+        {/* Segundo Alvo do Fiscal da Prefeitura */}
+        {isFiscal && (
+          <label className="pact-setting">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Segundo Morador para Auditoria</span>
+            <select value={secondTargetId} onChange={(event) => setSecondTargetId(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: '#8b93ff', borderColor: 'rgba(100,100,220,0.3)', fontFamily: 'Outfit' }}>
+              <option value="">--- SELECIONE O SEGUNDO MORADOR ---</option>
+              {livingTargets.filter(p => p.id !== targetId).map(player => (
+                <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {/* Habilidades do Lobisomem Ilusionista (Troca de Votos) */}
+        {isIlusionista && (
+          <>
             <label className="pact-setting">
-              <span>{isBeata ? 'Proteger Vivo / Purificar Morto' : needsDead ? 'Desenterrar Corpo Morto' : 'Alvo Principal'}</span>
-              <select value={targetId} onChange={(event) => setTargetId(event.target.value)} className="glass-select" style={{ color: '#8b93ff', borderColor: 'rgba(100,100,220,0.3)' }}>
-                <option value="">{needsDead ? 'ESCOLHER MORTO' : 'SELECIONE O ALVO'}</option>
-                {(isBeata ? anyTargets : targets).map(player => (
-                  <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {/* Poder de Radialista */}
-          {isRadialista && (
-            <label className="pact-setting">
-              <span>Transmitir Teoria da Conspiração</span>
-              <select value={directive} onChange={(event) => setDirective(event.target.value)} className="glass-select" style={{ color: '#d4af37', borderColor: 'rgba(212,175,55,0.3)' }}>
-                <option value="">SELECIONE A DIRETRIZ</option>
-                {!usedDirectives.includes('Lei Seca') && <option value="Lei Seca">LEI SECA (Cancela os votos do dia)</option>}
-                {!usedDirectives.includes('Fake News') && <option value="Fake News">FAKE NEWS (Enforca quem tem menos votos)</option>}
-                {!usedDirectives.includes('Censura Federal') && <option value="Censura Federal">CENSURA FEDERAL (Votos secretos)</option>}
-              </select>
-            </label>
-          )}
-
-          {/* Poder do Fiscal da Prefeitura */}
-          {isFiscal && (
-            <label className="pact-setting">
-              <span>Segundo Alvo da Auditoria</span>
-              <select value={secondTargetId} onChange={(event) => setSecondTargetId(event.target.value)} className="glass-select" style={{ color: '#8b93ff', borderColor: 'rgba(100,100,220,0.3)' }}>
-                <option value="">SELECIONE SEGUNDO ALVO</option>
-                {livingTargets.filter(p => p.id !== targetId).map(player => (
-                  <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {/* Poder do Lobisomem Ilusionista (Troca de Votos) */}
-          {isIlusionista && (
-            <>
-              <label className="pact-setting">
-                <span>Ilusão: Primeiro Jogador Vivo</span>
-                <select value={swapFirstId} onChange={(event) => setSwapFirstId(event.target.value)} className="glass-select" style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)' }}>
-                  <option value="">PRIMEIRO ALVO DE VOTO</option>
-                  {livingTargets.map(player => (
-                    <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="pact-setting">
-                <span>Ilusão: Segundo Jogador Vivo</span>
-                <select value={swapSecondId} onChange={(event) => setSwapSecondId(event.target.value)} className="glass-select" style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)' }}>
-                  <option value="">SEGUNDO ALVO DE VOTO</option>
-                  {livingTargets.filter(p => p.id !== swapFirstId).map(player => (
-                    <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
-                  ))}
-                </select>
-              </label>
-            </>
-          )}
-
-          {/* Poder do Lobisomem Hipnotista (Gag Mordaça) */}
-          {isHipnotista && (
-            <label className="pact-setting">
-              <span>Lançar Mordaça do Pavor</span>
-              <select value={gagTargetId} onChange={(event) => setGagTargetId(event.target.value)} className="glass-select" style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)' }}>
-                <option value="">AMORDAÇAR JOGADOR</option>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Troca de Voto: Primeiro Jogador Vivo</span>
+              <select value={swapFirstId} onChange={(event) => setSwapFirstId(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)', fontFamily: 'Outfit' }}>
+                <option value="">--- PRIMEIRO ALVO ---</option>
                 {livingTargets.map(player => (
                   <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
                 ))}
               </select>
             </label>
-          )}
 
-          {/* Poder do Lobisomem Mimético (Spy) */}
-          {isMimetico && (
             <label className="pact-setting">
-              <span>Mimetizar Investigador (Copiar Relatório)</span>
-              <select value={spyTargetId} onChange={(event) => setSpyTargetId(event.target.value)} className="glass-select" style={{ color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)' }}>
-                <option value="">ESPIONAR RELATÓRIO DE JOGADOR</option>
-                {livingTargets.map(player => (
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Troca de Voto: Segundo Jogador Vivo</span>
+              <select value={swapSecondId} onChange={(event) => setSwapSecondId(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)', fontFamily: 'Outfit' }}>
+                <option value="">--- SEGUNDO ALVO ---</option>
+                {livingTargets.filter(p => p.id !== swapFirstId).map(player => (
                   <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
                 ))}
               </select>
             </label>
-          )}
+          </>
+        )}
 
-          {/* Uivo do Alfa */}
-          {isAlpha && !alphaHowlUsed && (
-            <label className="pact-check" style={{ marginTop: '0.4rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={howl} onChange={(event) => setHowl(event.target.checked)} style={{ accentColor: '#ba0c0c' }} />
-              Uivar Demência (Forçar voto contra si mesmo)
-            </label>
-          )}
+        {/* Habilidade do Lobisomem Hipnotista (Mordaça) */}
+        {isHipnotista && (
+          <label className="pact-setting">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Escolher Morador para Amordaçar (Gag)</span>
+            <select value={gagTargetId} onChange={(event) => setGagTargetId(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)', fontFamily: 'Outfit' }}>
+              <option value="">--- SILENCIAR MORADOR ---</option>
+              {livingTargets.map(player => (
+                <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
+              ))}
+            </select>
+          </label>
+        )}
 
-          <button 
-            className="btn btn-secondary" 
-            onClick={submitNightAction} 
-            disabled={
-              (!isRadialista && !targetId) || 
-              (isRadialista && !directive) || 
-              (isFiscal && !secondTargetId) ||
-              (isIlusionista && (!swapFirstId || !swapSecondId)) ||
-              (isHipnotista && !gagTargetId) ||
-              (isMimetico && !spyTargetId)
-            }
-            style={{ borderColor: '#8b93ff', color: '#8b93ff', background: 'rgba(100,100,220,0.05)', marginTop: '0.5rem' }}
-          >
-            CONFIRMAR DECISÃO NOTURNA
-          </button>
-        </div>
-      ) : (
-        <button className="btn btn-glass" onClick={() => socket?.emit('pact_night_action', { targetId: livingTargets[0]?.id })}>
-          AGUARDAR TRANQUILAMENTE A NOITE
+        {/* Habilidade do Lobisomem Mimético (Spy) */}
+        {isMimetico && (
+          <label className="pact-setting">
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Escolher Morador para Copiar Relatório Noturno</span>
+            <select value={spyTargetId} onChange={(event) => setSpyTargetId(event.target.value)} className="glass-select" style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', color: '#ba0c0c', borderColor: 'rgba(186,12,12,0.3)', fontFamily: 'Outfit' }}>
+              <option value="">--- COPIAR INVESTIGAÇÕES ---</option>
+              {livingTargets.map(player => (
+                <option key={player.id} value={player.id}>{player.nickname.toUpperCase()}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {/* Uivo da Demência (Alfa) */}
+        {isAlpha && !alphaHowlUsed && (
+          <label className="pact-check" style={{ marginTop: '0.3rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', userSelect: 'none' }}>
+            <input type="checkbox" checked={howl} onChange={(event) => setHowl(event.target.checked)} style={{ width: '18px', height: '18px', accentColor: '#ba0c0c' }} />
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.85rem' }}>Ativar Uivo da Demência (Forçar auto-voto amanhã)</span>
+          </label>
+        )}
+
+        <button 
+          className={`btn ${isLobo ? 'btn-danger' : 'btn-secondary'}`} 
+          onClick={submitNightAction} 
+          disabled={
+            (!isRadialista && !targetId) || 
+            (isRadialista && !directive) || 
+            (isFiscal && !secondTargetId) ||
+            (isIlusionista && (!swapFirstId || !swapSecondId)) ||
+            (isHipnotista && !gagTargetId) ||
+            (isMimetico && !spyTargetId)
+          }
+          style={{ padding: '0.9rem', fontSize: '0.9rem', marginTop: '0.8rem' }}
+        >
+          SELAÇÃO DECIDIDA
         </button>
-      )}
+      </div>
 
       {isHost && (
-        <button className="btn btn-accent" onClick={() => socket?.emit('pact_resolve_night')} style={{ marginTop: '0.7rem' }}>
-          RESOLVER A NOITE
+        <button className="btn btn-accent" onClick={() => socket?.emit('pact_resolve_night')} style={{ marginTop: '0.5rem', padding: '0.75rem', fontSize: '0.85rem' }}>
+          RESOLVER A NOITE (HOST)
         </button>
       )}
     </section>
@@ -771,15 +879,15 @@ function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket, radioDire
       <h2>O Dia Abriu</h2>
       
       {isLeiSeca ? (
-        <p style={{ color: '#ba0c0c', fontFamily: 'var(--font-mono)' }}>
+        <p style={{ color: '#ba0c0c', fontFamily: 'Outfit', lineHeight: 1.4 }}>
           A Lei Seca está ativa! Nenhum enforcamento é permitido hoje. Use o tempo para dialogar e planejar.
         </p>
       ) : (
-        <p>Discutam em campo. Ao entrarem em acordo, cliquem em quem deve ser enforcado hoje.</p>
+        <p style={{ lineHeight: 1.4 }}>Discutam em campo. Ao entrarem em acordo, cliquem em quem deve ser enforcado hoje.</p>
       )}
 
       {debtorOfNickname && (
-        <p className="debt-blood-badge" style={{ alignSelf: 'center', marginBottom: '0.5rem' }}>
+        <p className="debt-blood-badge" style={{ alignSelf: 'center', marginBottom: '0.5rem', fontFamily: 'Outfit' }}>
           Seu voto está hipotecado! Você votará automaticamente igual a: {debtorOfNickname}.
         </p>
       )}
@@ -791,10 +899,10 @@ function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket, radioDire
             className="pact-vote-button"
             disabled={!me?.alive || isLeiSeca || player.id === me.id || Boolean(debtorOf)}
             onClick={() => vote(player.id)}
-            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+            style={{ borderColor: 'rgba(255,255,255,0.08)', fontFamily: 'Outfit' }}
           >
-            <span>{player.nickname}</span>
-            <strong style={{ color: '#ba0c0c' }}>
+            <span style={{ fontFamily: 'Outfit' }}>{player.nickname}</span>
+            <strong style={{ color: '#ba0c0c', fontFamily: 'Outfit' }}>
               {isCensura ? '?' : (voteCounts[player.id] || 0)}
             </strong>
           </button>
@@ -814,18 +922,21 @@ function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket, radioDire
 function RoleGuide({ compact = false }) {
   return (
     <section className={`pact-guide ${compact ? 'is-compact' : ''}`} style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(0,0,0,0.4)' }}>
-      <span className="pact-section-label" style={{ color: '#ba0c0c' }}>Dicionário de Classes de Teodoro</span>
+      <span className="pact-section-label" style={{ color: '#ba0c0c', fontFamily: 'Outfit', fontWeight: 'bold' }}>Dicionário de Classes de Teodoro</span>
       {ROLE_ORDER.map((name) => {
         const guide = ROLE_GUIDE[name];
         return (
           <details key={name} className="pact-guide-item" style={{ borderColor: 'rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.015)' }}>
-            <summary>
-              <strong>{name}</strong>
-              <small style={{ color: guide.side === 'Lobisomens' ? '#ba0c0c' : guide.side === 'Neutro' || guide.side === 'Neutro Caótico' ? '#d4af37' : '#00e676' }}>
+            <summary style={{ fontFamily: 'Outfit' }}>
+              <strong style={{ fontFamily: 'Outfit' }}>{name}</strong>
+              <small style={{ 
+                fontFamily: 'Outfit',
+                color: guide.side === 'Lobisomens' ? '#ba0c0c' : guide.side === 'Neutro' || guide.side === 'Neutro Caótico' ? '#d4af37' : '#00e676' 
+              }}>
                 {guide.side}
               </small>
             </summary>
-            <p style={{ fontSize: '0.8rem', marginTop: '0.4rem', lineHeight: 1.35 }}>
+            <p style={{ fontSize: '0.82rem', marginTop: '0.4rem', lineHeight: 1.4, fontFamily: 'Outfit' }}>
               <b>Meta:</b> {guide.goal}<br />
               <b>Ação Noturna:</b> {guide.night}<br />
               <b>Passiva/Extra:</b> {guide.extra}<br />
@@ -841,8 +952,8 @@ function RoleGuide({ compact = false }) {
 function LogPanel({ log }) {
   return (
     <section className="pact-log" style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.6)' }}>
-      <span className="pact-section-label" style={{ color: '#ba0c0c' }}>Crônica da Vila de Teodoro</span>
-      {log.map((entry, index) => <p key={`${entry}-${index}`} style={{ fontSize: '0.85rem', color: entry.startsWith('Amanhecer') || entry.startsWith('A Noite') ? '#ba0c0c' : 'rgba(255,255,255,0.8)' }}>{entry}</p>)}
+      <span className="pact-section-label" style={{ color: '#ba0c0c', fontFamily: 'Outfit', fontWeight: 'bold' }}>Crônica da Vila de Teodoro</span>
+      {log.map((entry, index) => <p key={`${entry}-${index}`} style={{ fontSize: '0.85rem', fontFamily: 'Outfit', lineHeight: 1.35, color: entry.startsWith('Amanhecer') || entry.startsWith('A Noite') ? '#ba0c0c' : 'rgba(255,255,255,0.8)' }}>{entry}</p>)}
     </section>
   );
 }
@@ -855,11 +966,11 @@ function PlayersPanel({ players, voteCounts }) {
           borderColor: player.alive ? 'rgba(255,255,255,0.05)' : 'rgba(186,12,12,0.22)',
           background: player.alive ? 'rgba(0,0,0,0.55)' : 'rgba(10,5,5,0.6)'
         }}>
-          <span style={{ color: player.alive ? '#fff' : '#a03030' }}>
+          <span style={{ color: player.alive ? '#fff' : '#a03030', fontFamily: 'Outfit' }}>
             {player.nickname.toUpperCase()} {player.isHost && '👑'}
           </span>
-          <small style={{ color: player.alive ? '#00e676' : '#a03030' }}>
-            {!player.connected ? 'offline' : player.alive ? `${voteCounts[player.id] || 0} votos` : (player.revealedRole || 'morto')}
+          <small style={{ color: player.alive ? '#00e676' : '#a03030', fontFamily: 'Outfit' }}>
+            {!player.connected ? 'offline' : player.alive ? `${voteCounts[player.id] || 0} Votos` : (player.revealedRole || 'Morto')}
           </small>
         </div>
       ))}
