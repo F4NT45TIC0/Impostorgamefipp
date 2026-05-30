@@ -345,6 +345,26 @@ export default function PactGame({ socket, onBack }) {
           </span>
         </div>
 
+        {((roomState.lastNightAnnounce && roomState.lastNightAnnounce.length > 0) || 
+          (roomState.lastDayAnnounce && roomState.lastDayAnnounce.length > 0)) && (
+          <div className="pact-event-banner" style={{
+            background: 'rgba(186, 12, 12, 0.05)',
+            border: '1px solid rgba(186, 12, 12, 0.22)',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1rem',
+            textAlign: 'left'
+          }}>
+            <span style={{ fontSize: '0.75rem', color: '#ba0c0c', letterSpacing: '0.08em', fontWeight: 'bold', fontFamily: 'Outfit', display: 'block', marginBottom: '0.4rem' }}>⚡ ACONTECIMENTOS EM TEODORO SAMPAIO ⚡</span>
+            {roomState.lastNightAnnounce && roomState.lastNightAnnounce.map((msg, idx) => (
+              <p key={`night-ann-${idx}`} style={{ margin: '0.2rem 0', fontSize: '0.88rem', fontFamily: 'Outfit', color: '#fff', lineHeight: 1.4 }}>{msg}</p>
+            ))}
+            {roomState.lastDayAnnounce && roomState.lastDayAnnounce.map((msg, idx) => (
+              <p key={`day-ann-${idx}`} style={{ margin: '0.2rem 0', fontSize: '0.88rem', fontFamily: 'Outfit', color: '#fff', lineHeight: 1.4 }}>{msg}</p>
+            ))}
+          </div>
+        )}
+
         {roomState.radioDirective && roomState.phase === 'DAY' && (
           <div className="radio-conspiracy-indicator">
             <span>📻 RÁDIO TEODORO AM (DIRETRIZ ATIVA)</span>
@@ -410,6 +430,9 @@ export default function PactGame({ socket, onBack }) {
                 socket={socket}
                 usedDirectives={privateState?.usedDirectives || []}
                 alphaHowlUsed={privateState?.alphaHowlUsed}
+                hasActed={privateState?.hasActed}
+                actionsCount={roomState.actionsCount}
+                livingCount={roomState.players.filter(p => p.alive && p.connected).length}
               />
             )}
 
@@ -424,6 +447,9 @@ export default function PactGame({ socket, onBack }) {
                 radioDirective={roomState.radioDirective}
                 debtorOf={privateState?.debtorOf}
                 debtorOfNickname={privateState?.debtorOfNickname}
+                hasVoted={privateState?.hasVoted}
+                votedCount={roomState.votedCount}
+                eligibleCount={roomState.eligibleCount}
               />
             )}
 
@@ -440,7 +466,7 @@ export default function PactGame({ socket, onBack }) {
               </section>
             )}
 
-            <LogPanel log={roomState.log} />
+            {isHost && <LogPanel log={roomState.log} />}
             
             {roomState.phase !== 'LOBBY' && (
               <PlayersPanel players={roomState.players} voteCounts={voteCounts} />
@@ -680,8 +706,39 @@ function NightView(props) {
     roleName, livingTargets, deadTargets, anyTargets, targetId, setTargetId,
     secondTargetId, setSecondTargetId, swapFirstId, setSwapFirstId, swapSecondId, setSwapSecondId,
     gagTargetId, setGagTargetId, spyTargetId, setSpyTargetId, howl, setHowl, directive, setDirective,
-    submitNightAction, isHost, socket, usedDirectives, alphaHowlUsed
+    submitNightAction, isHost, socket, usedDirectives, alphaHowlUsed,
+    hasActed, actionsCount, livingCount
   } = props;
+
+  if (hasActed) {
+    return (
+      <section className="pact-action-box" style={{ borderColor: 'rgba(100,100,220,0.18)', background: 'rgba(8,8,12,0.92)', textAlign: 'center', padding: '2rem 1.5rem' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '0.5rem', animation: 'floatBounce 3s infinite ease-in-out' }}>🌕</div>
+        <h2 style={{ color: '#8b93ff', justifyContent: 'center' }}>Silêncio em Teodoro Sampaio</h2>
+        <p style={{ color: '#a0a0b0', maxWidth: '340px', margin: '0.5rem auto 1.5rem auto', fontSize: '0.9rem', lineHeight: 1.45 }}>
+          Sua ação foi selada na escuridão. Esperando ações de outros jogadores para o amanhecer...
+        </p>
+        <div className="pact-waiting-badge" style={{
+          display: 'inline-block',
+          background: 'rgba(139,147,255,0.08)',
+          border: '1px solid rgba(139,147,255,0.25)',
+          borderRadius: '20px',
+          padding: '0.4rem 1.2rem',
+          color: '#8b93ff',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          fontFamily: 'Outfit'
+        }}>
+          Decisões Seladas: {actionsCount} / {livingCount} moradores
+        </div>
+        {isHost && (
+          <button className="btn btn-accent" onClick={() => socket?.emit('pact_resolve_night')} style={{ marginTop: '1.2rem', display: 'block', margin: '1.2rem auto 0 auto' }}>
+            FORÇAR RESOLUÇÃO (HOST)
+          </button>
+        )}
+      </section>
+    );
+  }
 
   // Se o jogador não tiver ação na noite
   const hasAction = !['Aldeão Marcado', 'O Parasita Sombrio'].includes(roleName);
@@ -692,10 +749,10 @@ function NightView(props) {
         <div style={{ fontSize: '3rem', marginBottom: '0.5rem', animation: 'floatBounce 3s infinite ease-in-out' }}>🌕</div>
         <h2 style={{ color: '#8b93ff', justifyContent: 'center' }}>Noite Calma em Teodoro</h2>
         <p style={{ color: '#a0a0b0', maxWidth: '320px', margin: '0.5rem auto 1.5rem auto', fontSize: '0.9rem', lineHeight: 1.45 }}>
-          Você é um <b>{roleName}</b>. Recolha-se à sua residência, feche bem as portas e aguarde o amanhecer na vila...
+          Você é um <b>{roleName}</b>. Não há ações ativas para você esta noite. Confirme que está pronto para o dia seguinte clicando no botão abaixo.
         </p>
-        <button className="btn btn-glass" disabled style={{ opacity: 0.5 }}>
-          AGUARDANDO O DIA...
+        <button className="btn btn-secondary" onClick={submitNightAction} style={{ padding: '0.9rem', fontSize: '0.9rem' }}>
+          SELAÇÃO DECIDIDA (PRONTO)
         </button>
         {isHost && (
           <button className="btn btn-accent" onClick={() => socket?.emit('pact_resolve_night')} style={{ marginTop: '1rem' }}>
@@ -943,9 +1000,65 @@ function NightView(props) {
   );
 }
 
-function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket, radioDirective, debtorOf, debtorOfNickname }) {
+function DayView({ alivePlayers, me, voteCounts, vote, isHost, socket, radioDirective, debtorOf, debtorOfNickname, hasVoted, votedCount, eligibleCount }) {
   const isCensura = radioDirective === 'Censura Federal';
   const isLeiSeca = radioDirective === 'Lei Seca';
+
+  if (hasVoted || !me?.canVote || me?.hangover || me?.gagged) {
+    return (
+      <section className="pact-action-box" style={{ borderColor: 'rgba(186,12,12,0.25)', background: 'rgba(8,8,12,0.92)', textAlign: 'center', padding: '2rem 1.5rem' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '0.5rem', animation: 'floatBounce 3s infinite ease-in-out' }}>⚖️</div>
+        <h2 style={{ color: '#d4af37', justifyContent: 'center' }}>Voto Registrado</h2>
+        <p style={{ color: '#a0a0b0', maxWidth: '340px', margin: '0.5rem auto 1.5rem auto', fontSize: '0.9rem', lineHeight: 1.45 }}>
+          {!me?.canVote || me?.hangover || me?.gagged 
+            ? 'Você está impossibilitado de votar hoje (devido a silenciamento ou ressaca).'
+            : 'Seu voto foi selado na urna de Teodoro Sampaio. Aguardando os demais moradores decidirem...'}
+        </p>
+        <div className="pact-waiting-badge" style={{
+          display: 'inline-block',
+          background: 'rgba(212,175,55,0.08)',
+          border: '1px solid rgba(212,175,55,0.25)',
+          borderRadius: '20px',
+          padding: '0.4rem 1.2rem',
+          color: '#d4af37',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          fontFamily: 'Outfit',
+          marginBottom: '1.5rem'
+        }}>
+          Votos Registrados: {votedCount} / {eligibleCount} moradores
+        </div>
+
+        {/* Mostrar placar parcial de votos se não estiver em Censura Federal */}
+        {!isCensura && (
+          <div style={{ marginTop: '0.5rem', width: '100%', textAlign: 'left' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.2rem' }}>Placar Parcial:</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {alivePlayers.map(p => {
+                const count = voteCounts[p.id] || 0;
+                if (count === 0) return null;
+                return (
+                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)', padding: '0.3rem 0.6rem', background: 'rgba(255,255,255,0.02)', borderRadius: '4px' }}>
+                    <span>{p.nickname.toUpperCase()}</span>
+                    <strong style={{ color: '#ba0c0c' }}>{count} {count === 1 ? 'voto' : 'votos'}</strong>
+                  </div>
+                );
+              })}
+              {Object.keys(voteCounts).length === 0 || Object.values(voteCounts).every(v => v === 0) ? (
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', fontStyle: 'italic', textAlign: 'center' }}>Nenhum voto acumulado ainda.</div>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {isHost && (
+          <div className="pact-host-row" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+            <button className="btn btn-accent" onClick={() => socket?.emit('pact_end_day')}>ENCERRAR JULGAMENTO (HOST)</button>
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="pact-action-box" style={{ borderColor: 'rgba(186,12,12,0.25)' }}>

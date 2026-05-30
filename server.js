@@ -535,7 +535,17 @@ io.on('connection', (socket) => {
 
     room.actions[player.id] = normalized;
     socket.emit('pact_private_message', 'Sua decisão foi selada na noite.');
+
+    // Auto-resolve a noite se todos os jogadores vivos e conectados enviaram suas ações!
+    const livingPlayers = room.players.filter(p => p.alive && p.connected);
+    const actionCount = Object.keys(room.actions).length;
+    
+    if (actionCount >= livingPlayers.length) {
+      resolvePactNight(room);
+    }
+
     emitPactRoom(room);
+    emitPactPrivateToAll(room);
   });
 
   socket.on('pact_resolve_night', () => {
@@ -548,14 +558,49 @@ io.on('connection', (socket) => {
 
   socket.on('pact_vote', ({ targetId }) => {
     const { room, player } = getPactRoomAndPlayer(socket.id);
-    if (!room || !player?.alive || room.phase !== 'DAY' || !player.canVote) return;
+    if (!room || !player?.alive || room.phase !== 'DAY') return;
+
+    // Se o jogador for devedor de um Agiota vivo, ele não pode iniciar o seu próprio voto
+    const agiota = room.players.find(p => p.id === player.debtorOf && p.alive);
+    if (agiota) {
+      return socket.emit('pact_private_message', 'Você está endividado! Seu voto é controlado pelo Agiota.');
+    }
+
+    if (!player.canVote || player.hangover || player.gagged) {
+      return socket.emit('pact_private_message', 'Você está impossibilitado de votar hoje (ressaca ou mordaça).');
+    }
 
     const target = room.players.find(p => p.id === targetId && p.alive);
     if (!target) return;
 
     const finalTargetId = player.selfVoteTrap ? player.id : target.id;
     room.votes[player.id] = finalTargetId;
-    checkPactMajority(room);
+
+    // Se este jogador for um Agiota, todos os seus devedores vivos que podem votar são forçados a votar no mesmo alvo!
+    const isAgiota = player.role?.name === PACT_ROLES.AGIOTA.name;
+    if (isAgiota) {
+      room.players.forEach(p => {
+        if (p.alive && p.connected && p.debtorOf === player.id && p.canVote && !p.hangover && !p.gagged) {
+          room.votes[p.id] = finalTargetId;
+          p.privateLog.push(`Contrato cobrado! Você foi forçado a votar no mesmo alvo que seu Agiota (${player.nickname}).`);
+        }
+      });
+    }
+
+    // Auto-resolve o dia se todos os eleitores elegíveis e conectados votaram!
+    const eligibleVoters = room.players.filter(p => p.alive && p.connected && p.canVote && !p.hangover && !p.gagged);
+    const voteCount = Object.keys(room.votes).length;
+    
+    if (voteCount >= eligibleVoters.length) {
+      executePactTopVoted(room);
+      if (room.phase !== 'ENDED') {
+        startPactNight(room);
+      }
+    } else {
+      // Se não atingiu todos, verifica maioria absoluta instantânea!
+      checkPactMajority(room);
+    }
+
     emitPactRoom(room);
     emitPactPrivateToAll(room);
   });
@@ -564,6 +609,9 @@ io.on('connection', (socket) => {
     const { room, player } = getPactRoomAndPlayer(socket.id);
     if (!room || !player?.isHost || room.phase !== 'DAY') return;
     executePactTopVoted(room);
+    if (room.phase !== 'ENDED') {
+      startPactNight(room);
+    }
     emitPactRoom(room);
     emitPactPrivateToAll(room);
   });
@@ -651,6 +699,8 @@ function createPactRoom(roomId, hostId, nickname) {
     votes: {},
     log: ['A Vila de Teodoro Sampaio ainda respira. Por enquanto.'],
     lastNightDeaths: [],
+    lastNightAnnounce: [],
+    lastDayAnnounce: [],
     nightDisabled: false,
     radioDirective: null,
     activeSwap: null,
@@ -685,7 +735,11 @@ function getPactPublicRoomState(room) {
     log: room.log.slice(-8),
     winner: room.winner,
     actionsCount: Object.keys(room.actions).length,
-    aliveCount: room.players.filter(p => p.alive).length
+    votedCount: Object.keys(room.votes).length,
+    eligibleCount: room.players.filter(p => p.alive && p.connected && p.canVote && !p.hangover && !p.gagged).length,
+    aliveCount: room.players.filter(p => p.alive).length,
+    lastNightAnnounce: room.lastNightAnnounce || [],
+    lastDayAnnounce: room.lastDayAnnounce || []
   };
 }
 
@@ -710,7 +764,9 @@ function emitPactPrivate(room, player) {
     debtorOfNickname: room.players.find(p => p.id === player.debtorOf)?.nickname || null,
     stolenAbility: player.stolenAbility || null,
     alphaHowlUsed: player.alphaHowlUsed || false,
-    usedDirectives: player.usedDirectives || []
+    usedDirectives: player.usedDirectives || [],
+    hasActed: Boolean(room.actions[player.id]),
+    hasVoted: Boolean(room.votes[player.id])
   });
 }
 
@@ -1123,6 +1179,8 @@ function resolvePactNight(room) {
   room.dayNumber += 1;
   room.actions = {};
   room.votes = {};
+  room.lastNightAnnounce = [...dawn];
+  room.lastDayAnnounce = [];
   
   if (room.radioDirective) {
     room.log.push(`Amanhecer ${room.dayNumber}. Transmissão AM da Rádio Teodoro: "${room.radioDirective}" ativa hoje!`, ...dawn);
@@ -1140,12 +1198,22 @@ function checkPactMajority(room) {
   const needed = Math.floor(eligible.length / 2) + 1;
   const counts = countVotes(room);
   const majority = Object.entries(counts).find(([, count]) => count >= needed);
-  if (majority) executePactPlayer(room, majority[0]);
+  if (majority) {
+    executePactPlayer(room, majority[0]);
+    if (room.phase !== 'ENDED') {
+      startPactNight(room);
+    }
+  }
 }
 
 function executePactTopVoted(room) {
+  room.lastDayAnnounce = [];
+  room.lastNightAnnounce = [];
+
   if (room.radioDirective === 'Lei Seca') {
-    room.log.push('A Lei Seca da Rádio Teodoro silenciou a forca hoje. Nenhum enforcamento ocorreu.');
+    const msg = 'A Lei Seca da Rádio Teodoro silenciou a forca hoje. Nenhum enforcamento ocorreu.';
+    room.log.push(msg);
+    room.lastDayAnnounce = [msg];
     room.votes = {};
     return checkPactWin(room);
   }
@@ -1156,20 +1224,26 @@ function executePactTopVoted(room) {
     // Julgamento reverso (menor quantidade de votos, mas mínimo de 1)
     const eligible = room.players.filter(p => p.alive && counts[p.id] > 0);
     if (eligible.length === 0) {
-      room.log.push('A rádio transmitiu Fake News, mas ninguém recebeu votos hoje.');
+      const msg = 'A rádio transmitiu Fake News, mas ninguém recebeu votos hoje.';
+      room.log.push(msg);
+      room.lastDayAnnounce = [msg];
       room.votes = {};
       return checkPactWin(room);
     }
     const sorted = eligible.sort((a, b) => counts[a.id] - counts[b.id]);
     const victim = sorted[0];
-    room.log.push(`Fake News! A Vila enforcou o menos votado hoje.`);
+    const msg = `Fake News! A Vila enforcou o menos votado hoje.`;
+    room.log.push(msg);
+    room.lastDayAnnounce = [msg];
     executePactPlayer(room, victim.id);
     return;
   }
   
   const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
   if (!top) {
-    room.log.push('O dia morreu sem consenso. A forca permaneceu vazia.');
+    const msg = 'O dia morreu sem consenso. A forca permaneceu vazia.';
+    room.log.push(msg);
+    room.lastDayAnnounce = [msg];
     return checkPactWin(room);
   }
   executePactPlayer(room, top[0]);
@@ -1208,9 +1282,16 @@ function executePactPlayer(room, targetId) {
   target.alive = false;
   room.votes = {};
   
-  room.log.push(room.settings.revealDeadRoles !== false || target.purified
+  const msg = room.settings.revealDeadRoles !== false || target.purified
     ? `${target.nickname} foi levado ao julgamento. A corda revelou: ${target.role.name}.`
-    : `${target.nickname} foi levado ao julgamento. A corda ocultou sua classe.`);
+    : `${target.nickname} foi levado ao julgamento. A corda ocultou sua classe.`;
+  room.log.push(msg);
+  
+  room.lastDayAnnounce = room.lastDayAnnounce || [];
+  if (!room.lastDayAnnounce.includes(msg)) {
+    room.lastDayAnnounce.push(msg);
+  }
+  room.lastNightAnnounce = [];
 
   // Parasita Sombrio victory condition
   const parasite = room.players.find(p => p.alive && p.role?.name === PACT_ROLES.PARASITE.name);
@@ -1308,6 +1389,8 @@ function resetPactRoom(room) {
   room.activeSwap = null;
   room.winner = null;
   room.lastNightDeaths = [];
+  room.lastNightAnnounce = [];
+  room.lastDayAnnounce = [];
   room.nightDisabled = false;
   room.log = ['A Vila de Teodoro Sampaio ainda respira. Por enquanto.'];
   
@@ -1337,7 +1420,29 @@ function handlePactPlayerExit(socket, isDisconnect = false) {
 
   if (isDisconnect && room.phase !== 'LOBBY') {
     player.connected = false;
+    
+    // Auto-resolve night or day when a player disconnects!
+    if (room.phase === 'NIGHT') {
+      const livingPlayers = room.players.filter(p => p.alive && p.connected);
+      const actionCount = Object.keys(room.actions).length;
+      if (actionCount >= livingPlayers.length && livingPlayers.length > 0) {
+        resolvePactNight(room);
+      }
+    } else if (room.phase === 'DAY') {
+      const eligibleVoters = room.players.filter(p => p.alive && p.connected && p.canVote && !p.hangover && !p.gagged);
+      const voteCount = Object.keys(room.votes).length;
+      if (voteCount >= eligibleVoters.length && eligibleVoters.length > 0) {
+        executePactTopVoted(room);
+        if (room.phase !== 'ENDED') {
+          startPactNight(room);
+        }
+      } else {
+        checkPactMajority(room);
+      }
+    }
+    
     emitPactRoom(room);
+    emitPactPrivateToAll(room);
     return;
   }
 
